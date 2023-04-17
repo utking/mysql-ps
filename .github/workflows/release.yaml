@@ -9,7 +9,7 @@ jobs:
     name: release linux/amd64
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: wangyoucao577/go-release-action@v1.37
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -19,11 +19,12 @@ jobs:
         ldflags: '-w -s'
         binary_name: "mysql-ps"
         extra_files: .env.example ReadMe.md
+        retry: 10
   release-ubuntu-22_04-amd64:
     name: release linux/amd64
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: wangyoucao577/go-release-action@v1.37
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -33,13 +34,14 @@ jobs:
         ldflags: '-w -s'
         binary_name: "mysql-ps"
         extra_files: .env.example ReadMe.md
+        retry: 10
   release-centos7-amd64:
     name: release linux/amd64
     runs-on: ubuntu-22.04
     container: centos:7
     steps:
     - uses: bytedeco/javacpp-presets/.github/actions/deploy-centos@actions
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: wangyoucao577/go-release-action@v1.37
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -49,3 +51,4 @@ jobs:
         ldflags: '-w -s'
         binary_name: "mysql-ps"
         extra_files: .env.example ReadMe.md
+        retry: 10
