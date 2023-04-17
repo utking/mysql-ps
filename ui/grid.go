@@ -20,7 +20,7 @@ func CreateUIGrid() {
 
 	UIStatusBar = CreateStatusBar("Status")
 	UISQLView = CreateSQLViewer("SQL View")
-	UIListView = CreateListViewer(UIApp, "Prqocess List")
+	UIListView = CreateListViewer(UIApp, "Process List")
 	UIMenuBar = CreateMenuBar()
 
 	UIGrid = tview.NewFlex().SetDirection(tview.FlexRow)
