@@ -5,10 +5,10 @@ import (
 )
 
 type ProcessItem struct {
-	Host         string         `db:"HOST"`
-	User         string         `db:"USER"`
-	Command      string         `db:"COMMAND"`
-	State        string         `db:"STATE"`
+	Host         sql.NullString `db:"HOST"`
+	User         sql.NullString `db:"USER"`
+	Command      sql.NullString `db:"COMMAND"`
+	State        sql.NullString `db:"STATE"`
 	DB           sql.NullString `db:"DB"`
 	Info         sql.NullString `db:"INFO"`
 	ID           int64          `db:"ID"`
