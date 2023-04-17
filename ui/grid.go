@@ -46,3 +46,13 @@ func StopApp() {
 func SetFocus(p tview.Primitive) *tview.Application {
 	return UIApp.SetFocus(p)
 }
+
+func FlipHelp() {
+	MenuVisible = !MenuVisible
+
+	if MenuVisible {
+		UIGrid.ResizeItem(UIMenuBar, FixedRowsHeight3, BlockHeight2)
+	} else {
+		UIGrid.ResizeItem(UIMenuBar, BlockHeightNone, BlockHeightNone)
+	}
+}

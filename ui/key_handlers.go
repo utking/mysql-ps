@@ -13,13 +13,7 @@ func KeyHandler(event *tcell.EventKey) *tcell.EventKey {
 	} else if event.Rune() == rune('p') {
 		IsRunning = !IsRunning
 	} else if event.Key() == tcell.KeyF1 {
-		MenuVisible = !MenuVisible
-
-		if MenuVisible {
-			UIGrid.ResizeItem(UIMenuBar, FixedRowsHeight3, BlockHeight2)
-		} else {
-			UIGrid.ResizeItem(UIMenuBar, BlockHeightNone, BlockHeightNone)
-		}
+		FlipHelp()
 	} else if event.Key() == tcell.KeyF2 {
 		UIGrid.ResizeItem(UISQLView, 0, BlockHeight10)
 		SetFocus(UIListView)
@@ -30,16 +24,20 @@ func KeyHandler(event *tcell.EventKey) *tcell.EventKey {
 		HideSQLViewer()
 		SetFocus(UIListView)
 	} else if event.Key() == tcell.KeyCtrlS {
-		pri, sec := UIListView.GetItemText(UIListView.GetCurrentItem())
+		if UIListView.GetItemCount() > 0 {
+			pri, sec := UIListView.GetItemText(UIListView.GetCurrentItem())
 
-		if err := helpers.WriteSQLLog(fmt.Sprintf("-- %s\n%s", pri, sec), false); err != nil {
-			UISQLView.SetText(err.Error())
+			if err := helpers.WriteSQLLog(fmt.Sprintf("-- %s\n%s", pri, sec), false); err != nil {
+				UISQLView.SetText(err.Error())
+			}
 		}
 	} else if event.Key() == tcell.KeyCtrlA {
-		pri, sec := UIListView.GetItemText(UIListView.GetCurrentItem())
+		if UIListView.GetItemCount() > 0 {
+			pri, sec := UIListView.GetItemText(UIListView.GetCurrentItem())
 
-		if err := helpers.WriteSQLLog(fmt.Sprintf("\n--\n-- %s\n%s", pri, sec), true); err != nil {
-			UISQLView.SetText(err.Error())
+			if err := helpers.WriteSQLLog(fmt.Sprintf("\n--\n-- %s\n%s", pri, sec), true); err != nil {
+				UISQLView.SetText(err.Error())
+			}
 		}
 	}
 
