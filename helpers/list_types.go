@@ -5,8 +5,8 @@ import (
 )
 
 type ProcessItem struct {
-	Host         sql.NullString `db:"HOST"`
-	User         sql.NullString `db:"USER"`
+	Host         string         `db:"HOST"`
+	User         string         `db:"USER"`
 	Command      sql.NullString `db:"COMMAND"`
 	State        sql.NullString `db:"STATE"`
 	DB           sql.NullString `db:"DB"`
