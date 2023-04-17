@@ -20,6 +20,7 @@ jobs:
         binary_name: "mysql-ps"
         extra_files: .env.example ReadMe.md
         retry: 10
+        asset_name: "${BINARY_NAME}-${RELEASE_TAG}-ubuntu-2004-${GOARCH}"
   release-ubuntu-22_04-amd64:
     name: release linux/amd64
     runs-on: ubuntu-22.04
@@ -35,6 +36,7 @@ jobs:
         binary_name: "mysql-ps"
         extra_files: .env.example ReadMe.md
         retry: 10
+        asset_name: "${BINARY_NAME}-${RELEASE_TAG}-ubuntu-2204-${GOARCH}"
   release-centos7-amd64:
     name: release linux/amd64
     runs-on: ubuntu-22.04
@@ -52,3 +54,4 @@ jobs:
         binary_name: "mysql-ps"
         extra_files: .env.example ReadMe.md
         retry: 10
+        asset_name: "${BINARY_NAME}-${RELEASE_TAG}-centos7-${GOARCH}"
