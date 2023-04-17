@@ -11,7 +11,7 @@ func KeyHandler(event *tcell.EventKey) *tcell.EventKey {
 	if event.Rune() == rune('q') {
 		StopApp()
 	} else if event.Rune() == rune('p') {
-		IsRunnin = !IsRunnin
+		IsRunning = !IsRunning
 	} else if event.Key() == tcell.KeyF1 {
 		MenuVisible = !MenuVisible
 

@@ -25,7 +25,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ui.IsRunnin = true
+	ui.IsRunning = true
 	if ui.TimerSec, _ = strconv.Atoi(os.Getenv("REFRESH_INTERVAL")); ui.TimerSec <= 0 {
 		ui.TimerSec = 1
 	}

@@ -10,7 +10,7 @@ import (
 
 var (
 	TimerSec  int
-	IsRunnin  bool
+	IsRunning bool
 	ListLengh int
 	status    string
 )
@@ -25,7 +25,7 @@ func Run() {
 
 func PSWorker(listFn func() ([]helpers.ProcessItem, error)) {
 	for range time.Tick(time.Second * time.Duration(TimerSec)) {
-		if !IsRunnin {
+		if !IsRunning {
 			status = "Paused"
 
 			UIStatusBar.SetBorderColor(tcell.ColorYellow)
@@ -49,7 +49,7 @@ func PSWorker(listFn func() ([]helpers.ProcessItem, error)) {
 		if itemsList, err = listFn(); err != nil {
 			UISQLView.SetText(err.Error())
 
-			IsRunnin = false
+			IsRunning = false
 
 			continue
 		}
