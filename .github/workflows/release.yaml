@@ -37,21 +37,3 @@ jobs:
         extra_files: .env.example ReadMe.md
         retry: 10
         asset_name: "mysql-ps-ubuntu-2204-amd64"
-  release-centos7-amd64:
-    name: release linux/amd64
-    runs-on: ubuntu-22.04
-    container: centos:7
-    steps:
-    - uses: bytedeco/javacpp-presets/.github/actions/deploy-centos@actions
-    - uses: actions/checkout@v3
-    - uses: wangyoucao577/go-release-action@v1.37
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        goos: linux
-        goarch: amd64
-        overwrite: TRUE
-        ldflags: '-w -s'
-        binary_name: "mysql-ps"
-        extra_files: .env.example ReadMe.md
-        retry: 10
-        asset_name: "mysql-ps-centos7-amd64"
