@@ -59,7 +59,8 @@ func PSWorker(listFn func() ([]helpers.ProcessItem, error)) {
 		UpdateStatusBar(status, ListLengh)
 		UIApp.QueueUpdateDraw(func() {
 			for i := range itemsList {
-				lineName := fmt.Sprintf("%s (%ds) from %s@%s",
+				lineName := fmt.Sprintf("%d: %s (%ds) from %s@%s",
+					itemsList[i].ID,
 					itemsList[i].DB.String,
 					itemsList[i].Time,
 					itemsList[i].User,

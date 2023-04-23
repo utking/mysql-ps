@@ -23,7 +23,7 @@ make tar
 
 ### Pre-flight configuration
 
-To run the compiled binary, you can put the following env variables in the .env file:
+To run the compiled binary, you need to have proper MySQL DSN and credentials. If you have a ~/.my.cnf, the application will try to use it. Alternatively, you can configure the following env variables (or put them in the .env file):
 
 - MYSQL_DSN - `tcp(HOST:MYSQL-PORT)` OR `@unix(/path/to/sock/file)`, default - `tcp(127.0.0.1:3306)`
 - MYSQL_USER

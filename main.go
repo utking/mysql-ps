@@ -5,18 +5,15 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/joho/godotenv"
 	"github.com/utking/mysql-ps/db"
+	"github.com/utking/mysql-ps/helpers"
 	"github.com/utking/mysql-ps/ui"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Println("Error loading .env file", err)
-	}
-
+	helpers.LoadConfig()
 	ui.CreateUIGrid()
 	ui.SetGlobalHandler(ui.KeyHandler)
 
