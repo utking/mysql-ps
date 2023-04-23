@@ -40,8 +40,8 @@ There a several shurtcuts to use while using the application - hints will be sho
 - Q - exit the program (no additional questions asked)
 - Enter - when pressed on a process list line, will show the full SQL query in the bottom preview area
 - Esc - when the preview area is visible, pressing Esc will hide it
-- F1 - press to show the below shortcut hints
-- F2 - when viewing the full SQL query, press F2 to switch back to the process-list area (without hiding the preview)
-- F3 - open it and switch to the preview area
+- ? - press to show the shortcut hints
+- L - when viewing the full SQL query, press L to switch back to the process-list area (without hiding the preview)
+- V - open it and switch to the preview area
 - Ctrl+S - clean the saved-queries file (queries.sql) and save the currently selected process-list line to it
 - Ctrl+A - append the currently selected process-list line to the existing log file, or create the file if it is missing
