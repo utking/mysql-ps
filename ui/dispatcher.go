@@ -18,7 +18,7 @@ var (
 func Run() {
 	UIListView.SetSelectedFunc(OpenSQLQuery)
 
-	if err := UIApp.SetRoot(UIFlex, true).Run(); err != nil {
+	if err := UIApp.SetRoot(UIFlex, true).EnableMouse(helpers.IsMouseEnabled()).Run(); err != nil {
 		panic(err)
 	}
 }

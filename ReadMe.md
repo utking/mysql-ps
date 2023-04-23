@@ -29,6 +29,7 @@ To run the compiled binary, you need to have proper MySQL DSN and credentials. I
 - MYSQL_USER
 - MYSQL_PASSWORD
 - REFRESH_INTERVAL - process-list refresh rate, in seconds; default - 1. Any non-positive or non-numeric values will be reset to 1
+- USE_MOUSE - `true` OR `1` will enable mouse navigation
 
 Instead of putting these variables in .env, you can
 

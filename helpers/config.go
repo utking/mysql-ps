@@ -47,3 +47,7 @@ func LoadConfig() {
 
 	_ = godotenv.Load()
 }
+
+func IsMouseEnabled() bool {
+	return os.Getenv("USE_MOUSE") == "1" || os.Getenv("USE_MOUSE") == "true"
+}
