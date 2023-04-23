@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	unitMB = 1024 * 1024
+	unitMB = 1024 * 1024.0
 )
 
 func CreateStatusBar(title string) *tview.TextView {
@@ -21,16 +21,16 @@ func CreateStatusBar(title string) *tview.TextView {
 }
 
 func UpdateStatusBar(status string, listLen int) {
-	statusMessage := fmt.Sprintf("%s (%ds) | Processes:%4d | DSN: %s | Mem: %dMB | ? for Help",
+	statusMessage := fmt.Sprintf("%s (%ds) | Processes:%4d | DSN: %s | Mem: %.2fMB | ? for Help",
 		status, TimerSec, listLen, os.Getenv("MYSQL_DSN"), getMemUsage())
 	UIStatusBar.SetText(statusMessage)
 }
 
 // Returns the total allocated memory, in MB
-func getMemUsage() uint64 {
+func getMemUsage() float64 {
 	var stats runtime.MemStats
 
 	runtime.ReadMemStats(&stats)
 
-	return stats.TotalAlloc / unitMB
+	return float64(stats.Alloc) / unitMB
 }
