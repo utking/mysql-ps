@@ -33,7 +33,7 @@ func LoadConfig() {
 		}
 
 		if socket != "" {
-			os.Setenv("MYSQL_DSN", fmt.Sprintf("@unix(%s)", socket))
+			os.Setenv("MYSQL_DSN", fmt.Sprintf("unix(%s)", socket))
 		}
 
 		if user != "" && os.Getenv("MYSQL_USER") == "" {
