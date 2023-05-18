@@ -13,6 +13,8 @@ func KeyHandler(event *tcell.EventKey) *tcell.EventKey {
 		StopApp()
 	case rune('p'):
 		IsRunning = !IsRunning
+	case rune('s'):
+		ShowSystem = !ShowSystem
 	case rune('?'):
 		FlipHelp()
 	case rune('l'):

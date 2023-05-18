@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/utking/mysql-ps/helpers"
@@ -20,10 +21,20 @@ func ConnectDB(user, password, dsn string) error {
 	return nil
 }
 
-func GetProcessList() ([]helpers.ProcessItem, error) {
+func GetProcessList(filters []string) ([]helpers.ProcessItem, error) {
 	list := []helpers.ProcessItem{}
+	filterBuilder := strings.Builder{}
 
-	if err := db.Select(&list, "SELECT * FROM INFORMATION_SCHEMA.PROCESSLIST WHERE DB != 'sys' AND COMMAND != 'Sleep' AND USER != 'system user' ORDER BY time DESC"); err != nil {
+	filterBuilder.WriteString("SELECT * FROM INFORMATION_SCHEMA.PROCESSLIST WHERE COMMAND != 'Sleep'")
+	filterBuilder.WriteString(" AND USER != 'system user'")
+
+	for _, filter := range filters {
+		filterBuilder.WriteString(fmt.Sprintf(" AND %s", filter))
+	}
+
+	filterBuilder.WriteString(" ORDER BY time DESC")
+
+	if err := db.Select(&list, filterBuilder.String()); err != nil {
 		return list, err
 	}
 

@@ -17,6 +17,7 @@ const (
 var (
 	menuLabels = []string{
 		"Pause (P)",
+		"Show sys DB (S)",
 		"Show View (Ent)",
 		"Hide View (Esc)",
 		"To list (L)",

@@ -38,6 +38,7 @@ Instead of putting these variables in .env, you can
 There a several shurtcuts to use while using the application - hints will be shown on the top ot the progream screen
 
 - P - pause/resume refreshing the process-list (when paused, the statusbar border color will change to yellow)
+- S - show/hide system queries
 - Q - exit the program (no additional questions asked)
 - Enter - when pressed on a process list line, will show the full SQL query in the bottom preview area
 - Esc - when the preview area is visible, pressing Esc will hide it

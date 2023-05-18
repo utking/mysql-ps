@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -9,10 +10,12 @@ import (
 )
 
 var (
-	TimerSec  int
-	IsRunning bool
-	ListLengh int
-	status    string
+	TimerSec    int
+	IsRunning   bool
+	ShowSystem  bool
+	ListLengh   int
+	status      string
+	listFilters []string
 )
 
 func Run() {
@@ -23,8 +26,14 @@ func Run() {
 	}
 }
 
-func PSWorker(listFn func() ([]helpers.ProcessItem, error)) {
+func PSWorker(listFn func([]string) ([]helpers.ProcessItem, error)) {
 	for range time.Tick(time.Second * time.Duration(TimerSec)) {
+		if !ShowSystem {
+			listFilters = []string{"DB != 'sys'"}
+		} else {
+			listFilters = []string{}
+		}
+
 		if !IsRunning {
 			status = "Paused"
 
@@ -46,7 +55,7 @@ func PSWorker(listFn func() ([]helpers.ProcessItem, error)) {
 		UIStatusBar.SetBorderColor(tcell.ColorWhite)
 		UIListView.Clear()
 
-		if itemsList, err = listFn(); err != nil {
+		if itemsList, err = listFn(listFilters); err != nil {
 			UISQLView.SetText(err.Error())
 
 			IsRunning = false
@@ -56,15 +65,26 @@ func PSWorker(listFn func() ([]helpers.ProcessItem, error)) {
 
 		ListLengh = len(itemsList)
 
+		for i := range itemsList {
+			if strings.Contains(itemsList[i].Info.String, "INFORMATION_SCHEMA.PROCESSLIST") {
+				ListLengh--
+			}
+		}
+
 		UpdateStatusBar(status, ListLengh)
 		UIApp.QueueUpdateDraw(func() {
 			for i := range itemsList {
-				lineName := fmt.Sprintf("%d: %s (%ds) from %s@%s",
+				if strings.Contains(itemsList[i].Info.String, "INFORMATION_SCHEMA.PROCESSLIST") {
+					continue
+				}
+
+				lineName := fmt.Sprintf("%d: %s (%ds) from %s@%s - %s",
 					itemsList[i].ID,
 					itemsList[i].DB.String,
 					itemsList[i].Time,
 					itemsList[i].User,
-					helpers.HostDropPort(itemsList[i].Host))
+					helpers.HostDropPort(itemsList[i].Host),
+					itemsList[i].State.String)
 
 				UIListView.AddItem(lineName, itemsList[i].Info.String, 0, nil)
 			}
