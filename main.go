@@ -24,7 +24,7 @@ func main() {
 
 	ui.IsRunning = true
 	if ui.TimerSec, _ = strconv.Atoi(os.Getenv("REFRESH_INTERVAL")); ui.TimerSec <= 0 {
-		ui.TimerSec = 1
+		ui.TimerSec = 2
 	}
 
 	go ui.PSWorker(db.GetProcessList)
