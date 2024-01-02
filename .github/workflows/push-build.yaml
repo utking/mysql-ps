@@ -3,7 +3,7 @@
 on: 
   push:
     branches:
-      - master
+      - main
 
 jobs:
   build-ubuntu-20_04-amd64:
