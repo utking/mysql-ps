@@ -28,10 +28,16 @@ To run the compiled binary, you need to have proper MySQL DSN and credentials. I
 - MYSQL_DSN - `tcp(HOST:MYSQL-PORT)` OR `@unix(/path/to/sock/file)`, default - `tcp(127.0.0.1:3306)`
 - MYSQL_USER
 - MYSQL_PASSWORD
-- REFRESH_INTERVAL - process-list refresh rate, in seconds; default - 1. Any non-positive or non-numeric values will be reset to 1
-- USE_MOUSE - `true` OR `1` will enable mouse navigation
 
-Instead of putting these variables in .env, you can
+Refresh interval and enabling mouse interaction can be done using the CLI arguments:
+
+```
+Flags:
+  -d, --database stringArray   Databases list to filter by; example - -d b1 -d db2
+  -h, --help                   help for this command
+  -i, --interval int           Refresh interval in seconds (default 2)
+  -m, --mouse                  Enable mouse interaction
+```
 
 ### Runtime
 

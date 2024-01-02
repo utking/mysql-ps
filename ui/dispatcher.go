@@ -13,20 +13,28 @@ var (
 	TimerSec    int
 	IsRunning   bool
 	ShowSystem  bool
+	UseMouse    bool
 	ListLengh   int
 	status      string
 	listFilters []string
+	Databases   []string
 )
 
 func Run() {
 	UIListView.SetSelectedFunc(OpenSQLQuery)
 
-	if err := UIApp.SetRoot(UIFlex, true).EnableMouse(helpers.IsMouseEnabled()).Run(); err != nil {
+	if err := UIApp.
+		SetRoot(UIFlex, true).
+		EnableMouse(UseMouse).
+		Run(); err != nil {
 		panic(err)
 	}
 }
 
-func PSWorker(listFn func([]string) ([]helpers.ProcessItem, error)) {
+func PSWorker(
+	listFn func([]string, []interface{}) ([]helpers.ProcessItem, error),
+	databases []interface{},
+) {
 	for range time.Tick(time.Second * time.Duration(TimerSec)) {
 		if !ShowSystem {
 			listFilters = []string{"DB != 'sys'"}
@@ -55,7 +63,7 @@ func PSWorker(listFn func([]string) ([]helpers.ProcessItem, error)) {
 		UIStatusBar.SetBorderColor(tcell.ColorWhite)
 		UIListView.Clear()
 
-		if itemsList, err = listFn(listFilters); err != nil {
+		if itemsList, err = listFn(listFilters, databases); err != nil {
 			UISQLView.SetText(err.Error())
 
 			IsRunning = false
@@ -66,7 +74,10 @@ func PSWorker(listFn func([]string) ([]helpers.ProcessItem, error)) {
 		ListLengh = len(itemsList)
 
 		for i := range itemsList {
-			if strings.Contains(itemsList[i].Info.String, "INFORMATION_SCHEMA.PROCESSLIST") {
+			if strings.Contains(
+				itemsList[i].Info.String,
+				"INFORMATION_SCHEMA.PROCESSLIST",
+			) {
 				ListLengh--
 			}
 		}
@@ -74,7 +85,10 @@ func PSWorker(listFn func([]string) ([]helpers.ProcessItem, error)) {
 		UpdateStatusBar(status, ListLengh)
 		UIApp.QueueUpdateDraw(func() {
 			for i := range itemsList {
-				if strings.Contains(itemsList[i].Info.String, "INFORMATION_SCHEMA.PROCESSLIST") {
+				if strings.Contains(
+					itemsList[i].Info.String,
+					"INFORMATION_SCHEMA.PROCESSLIST",
+				) {
 					continue
 				}
 
