@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v3
-    - uses: wangyoucao577/go-release-action@v1.37
+    - uses: wangyoucao577/go-release-action@v1.41
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         goos: linux
@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
-    - uses: wangyoucao577/go-release-action@v1.37
+    - uses: wangyoucao577/go-release-action@v1.41
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         goos: linux
