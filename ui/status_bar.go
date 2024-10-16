@@ -21,7 +21,7 @@ func CreateStatusBar(title string) *tview.TextView {
 }
 
 func UpdateStatusBar(status string, listLen int) {
-	statusMessage := fmt.Sprintf("%s (%ds) | Processes:%4d | DSN: %s | Mem: %.2fMB | Show Sys: %v | ? for Help",
+	statusMessage := fmt.Sprintf("%s (%.1fs) | Processes:%4d | DSN: %s | Mem: %.2fMB | Show Sys: %v | ? for Help",
 		status, TimerSec, listLen, os.Getenv("MYSQL_DSN"), getMemUsage(), ShowSystem)
 	UIStatusBar.SetText(statusMessage)
 }

@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	DefaultRefreshInterval = 2
+	DefaultRefreshInterval = 2.0
 )
 
 var (
@@ -55,7 +55,7 @@ func main() {
 		},
 	}
 
-	mainCmd.Flags().IntVarP(&ui.TimerSec, "interval", "i", DefaultRefreshInterval, "Refresh interval in seconds")
+	mainCmd.Flags().Float32VarP(&ui.TimerSec, "interval", "i", DefaultRefreshInterval, "Refresh interval in seconds")
 	mainCmd.Flags().BoolVarP(&ui.UseMouse, "mouse", "m", false, "Enable mouse interaction")
 	mainCmd.Flags().StringArrayVarP(&databases, "database", "d", []string{}, "Databases list to filter by; example - -d b1 -d db2")
 

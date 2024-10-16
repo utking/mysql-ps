@@ -1,17 +1,17 @@
 # .github/workflows/push-build.yaml
 
-on: 
+on:
   push:
     branches:
       - main
 
 jobs:
-  build-ubuntu-20_04-amd64:
+  build-ubuntu-22_04-amd64:
     name: release linux/amd64
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v3
-    - name: "Run Go tests"
-      shell: bash
-      run: |
-        go build main.go
+      - uses: actions/checkout@v4
+      - name: "Run Go tests"
+        shell: bash
+        run: |
+          go build main.go

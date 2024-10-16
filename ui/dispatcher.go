@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	TimerSec    int
+	TimerSec    float32
 	IsRunning   bool
 	ShowSystem  bool
 	UseMouse    bool
@@ -35,7 +35,7 @@ func PSWorker(
 	listFn func([]string, []interface{}) ([]helpers.ProcessItem, error),
 	databases []interface{},
 ) {
-	for range time.Tick(time.Second * time.Duration(TimerSec)) {
+	for range time.Tick(time.Millisecond * time.Duration(int64(1000*TimerSec))) {
 		if !ShowSystem {
 			listFilters = []string{"DB != 'sys'"}
 		} else {
