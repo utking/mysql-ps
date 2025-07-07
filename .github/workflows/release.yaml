@@ -5,9 +5,9 @@ on:
     types: [created]
 
 jobs:
-  release-ubuntu-20_04-amd64:
+  release-ubuntu-24_04-amd64:
     name: release linux/amd64
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: wangyoucao577/go-release-action@v1
