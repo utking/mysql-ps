@@ -31,11 +31,12 @@ func main() {
 			ui.CreateUIGrid()
 			ui.SetGlobalHandler(ui.KeyHandler)
 
-			if err := db.ConnectDB(
+			dbStore, err := db.ConnectDB(
 				os.Getenv("MYSQL_USER"),
 				os.Getenv("MYSQL_PASSWORD"),
 				os.Getenv("MYSQL_DSN"),
-			); err != nil {
+			)
+			if err != nil {
 				log.Println(err)
 				os.Exit(1)
 			}
@@ -53,7 +54,7 @@ func main() {
 
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			go ui.PSWorker(ctx, db.GetProcessList, databaseList)
+			go ui.PSWorker(ctx, dbStore.GetProcessList, databaseList)
 			ui.Run()
 		},
 	}

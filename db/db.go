@@ -8,23 +8,27 @@ import (
 	"github.com/utking/mysql-ps/helpers"
 )
 
-var (
-	db  *sqlx.DB
-	err error
-)
-
-func ConnectDB(user, password, dsn string) error {
-	if db, err = sqlx.Connect(
-		"mysql",
-		fmt.Sprintf("%s:%s@%s/sys", user, password, dsn),
-	); err != nil {
-		return err
-	}
-
-	return nil
+type Querier interface {
+	Select(dest interface{}, query string, args ...interface{}) error
 }
 
-func GetProcessList(filters []string, databases []interface{}) ([]helpers.ProcessItem, error) {
+type DBStore struct {
+	db Querier
+}
+
+func ConnectDB(user, password, dsn string) (*DBStore, error) {
+	conn, err := sqlx.Connect(
+		"mysql",
+		fmt.Sprintf("%s:%s@%s/sys", user, password, dsn),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &DBStore{db: conn}, nil
+}
+
+func (s *DBStore) GetProcessList(filters []string, databases []interface{}) ([]helpers.ProcessItem, error) {
 	list := []helpers.ProcessItem{}
 	filterBuilder := strings.Builder{}
 
@@ -55,7 +59,7 @@ func GetProcessList(filters []string, databases []interface{}) ([]helpers.Proces
 
 	filterBuilder.WriteString(" ORDER BY time DESC")
 
-	if err := db.Select(
+	if err := s.db.Select(
 		&list,
 		filterBuilder.String(),
 		databases...,
