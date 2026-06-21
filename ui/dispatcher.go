@@ -35,7 +35,10 @@ func PSWorker(
 	listFn func([]string, []interface{}) ([]helpers.ProcessItem, error),
 	databases []interface{},
 ) {
-	for range time.Tick(time.Millisecond * time.Duration(1000*TimerSec)) {
+	ticker := time.NewTicker(time.Millisecond * time.Duration(1000*TimerSec))
+	defer ticker.Stop()
+
+	for range ticker.C {
 		if !ShowSystem {
 			listFilters = []string{"DB != 'sys'"}
 		} else {
@@ -45,8 +48,8 @@ func PSWorker(
 		if !IsRunning {
 			status = "Paused"
 
-			UIStatusBar.SetBorderColor(tcell.ColorYellow)
 			UIApp.QueueUpdateDraw(func() {
+				UIStatusBar.SetBorderColor(tcell.ColorYellow)
 				UpdateStatusBar(status, ListLengh)
 			})
 
@@ -60,8 +63,10 @@ func PSWorker(
 
 		status = "Running"
 
-		UIStatusBar.SetBorderColor(tcell.ColorWhite)
-		UIListView.Clear()
+		UIApp.QueueUpdateDraw(func() {
+			UIStatusBar.SetBorderColor(tcell.ColorWhite)
+			UIListView.Clear()
+		})
 
 		if itemsList, err = listFn(listFilters, databases); err != nil {
 			UISQLView.SetText(err.Error())
