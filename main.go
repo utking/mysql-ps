@@ -46,15 +46,21 @@ func main() {
 				ui.TimerSec = DefaultRefreshInterval
 			}
 
-			// expand slice of strings to slice of interfaces
-			databaseList := make([]interface{}, len(databases))
-			for i, v := range databases {
-				databaseList[i] = v
+			config := ui.WorkerConfig{
+				TimerSec:   ui.TimerSec,
+				ShowSystem: ui.ShowSystem,
+				IsRunning:  &ui.IsRunning,
+				StatusBar:  ui.UIStatusBar,
+				ListView:   ui.UIListView,
+				SQLView:    ui.UISQLView,
+				DSN:        os.Getenv("MYSQL_DSN"),
+				Databases:  databases,
 			}
 
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			go ui.PSWorker(ctx, dbStore.GetProcessList, databaseList)
+
+			go ui.PSWorker(ctx, dbStore.GetProcessList, nil, config)
 			ui.Run()
 		},
 	}
