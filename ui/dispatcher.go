@@ -1,24 +1,53 @@
 package ui
 
 import (
+	"context"
 	"fmt"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 	"github.com/utking/mysql-ps/helpers"
 )
 
 var (
-	TimerSec    float32
-	IsRunning   bool
-	ShowSystem  bool
-	UseMouse    bool
-	ListLengh   int
-	status      string
-	listFilters []string
-	Databases   []string
+	TimerSecParam  float32
+	IsRunningParam atomic.Bool
+	ShowSystem     atomic.Bool
+	UseMouse       bool
 )
+
+var updateTriggerChan chan struct{}
+var lastManualUpdate time.Time
+
+func init() {
+	updateTriggerChan = make(chan struct{}, 1)
+}
+
+type WorkerConfig struct {
+	TimerSec       float32
+	ShowSystem     *atomic.Bool
+	IsRunning      *atomic.Bool
+	StatusBar      *tview.TextView
+	ListView       *tview.List
+	SQLView        *tview.TextView
+	DSN            string
+	Databases      []string
+	App            *tview.Application
+	OptionalUpdate func(func()) // Changed from Update to OptionalUpdate
+}
+
+func (c *WorkerConfig) Update(fn func()) {
+	if c.OptionalUpdate != nil {
+		c.OptionalUpdate(fn)
+	} else if c.App != nil {
+		c.App.QueueUpdateDraw(fn)
+	} else {
+		fn()
+	}
+}
 
 func Run() {
 	UIListView.SetSelectedFunc(OpenSQLQuery)
@@ -32,76 +61,110 @@ func Run() {
 }
 
 func PSWorker(
-	listFn func([]string, []interface{}) ([]helpers.ProcessItem, error),
-	databases []interface{},
+	ctx context.Context,
+	listFn func([]string, []any) ([]helpers.ProcessItem, error),
+	databases []any,
+	config WorkerConfig,
 ) {
-	for range time.Tick(time.Millisecond * time.Duration(1000*TimerSec)) {
-		if !ShowSystem {
-			listFilters = []string{"DB != 'sys'"}
-		} else {
-			listFilters = []string{}
+	ticker := time.NewTicker(time.Duration(float64(time.Second) * float64(config.TimerSec)))
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			performUpdate(&config, listFn)
+		case <-updateTriggerChan:
+			performUpdate(&config, listFn)
 		}
+	}
+}
 
-		if !IsRunning {
-			status = "Paused"
+func performUpdate(
+	config *WorkerConfig,
+	listFn func([]string, []any) ([]helpers.ProcessItem, error),
+) {
+	var listFilters []string
+	if !ShowSystem.Load() {
+		listFilters = []string{"DB != 'sys'"}
+	} else {
+		listFilters = []string{}
+	}
 
-			UIStatusBar.SetBorderColor(tcell.ColorYellow)
-			UIApp.QueueUpdateDraw(func() {
-				UpdateStatusBar(status, ListLengh)
-			})
+	if config.IsRunning.Load() == false {
+		status := "Paused"
+		listLen := 0
 
-			continue
+		config.Update(func() {
+			config.StatusBar.SetBorderColor(tcell.ColorYellow)
+			UpdateStatusBar(
+				config.StatusBar,
+				status,
+				listLen,
+				config.TimerSec,
+				ShowSystem.Load(),
+				config.DSN,
+				getMemUsage())
+		})
+		return
+	}
+
+	var (
+		err       error
+		itemsList []helpers.ProcessItem
+	)
+
+	dbInterfaces := make([]any, len(config.Databases))
+	for i, v := range config.Databases {
+		dbInterfaces[i] = v
+	}
+
+	if itemsList, err = listFn(listFilters, dbInterfaces); err != nil {
+		config.SQLView.SetText(err.Error())
+		config.IsRunning.Store(false)
+		return
+	}
+
+	status := "Running"
+	listLen := len(itemsList)
+
+	for i := range itemsList {
+		if strings.Contains(
+			itemsList[i].Info.String,
+			"INFORMATION_SCHEMA.PROCESSLIST",
+		) {
+			listLen--
 		}
+	}
 
-		var (
-			err       error
-			itemsList []helpers.ProcessItem
-		)
-
-		status = "Running"
-
-		UIStatusBar.SetBorderColor(tcell.ColorWhite)
-		UIListView.Clear()
-
-		if itemsList, err = listFn(listFilters, databases); err != nil {
-			UISQLView.SetText(err.Error())
-
-			IsRunning = false
-
-			continue
-		}
-
-		ListLengh = len(itemsList)
-
+	config.Update(func() {
+		config.StatusBar.SetBorderColor(tcell.ColorWhite)
+		config.ListView.Clear()
 		for i := range itemsList {
 			if strings.Contains(
 				itemsList[i].Info.String,
 				"INFORMATION_SCHEMA.PROCESSLIST",
 			) {
-				ListLengh--
+				continue
 			}
+			lineName := fmt.Sprintf("%d: %s (%ds) from %s@%s - %s",
+				itemsList[i].ID,
+				itemsList[i].DB.String,
+				itemsList[i].Time,
+				itemsList[i].User,
+				helpers.HostDropPort(itemsList[i].Host),
+				itemsList[i].State.String)
+
+			config.ListView.AddItem(lineName, itemsList[i].Info.String, 0, nil)
 		}
-
-		UpdateStatusBar(status, ListLengh)
-		UIApp.QueueUpdateDraw(func() {
-			for i := range itemsList {
-				if strings.Contains(
-					itemsList[i].Info.String,
-					"INFORMATION_SCHEMA.PROCESSLIST",
-				) {
-					continue
-				}
-
-				lineName := fmt.Sprintf("%d: %s (%ds) from %s@%s - %s",
-					itemsList[i].ID,
-					itemsList[i].DB.String,
-					itemsList[i].Time,
-					itemsList[i].User,
-					helpers.HostDropPort(itemsList[i].Host),
-					itemsList[i].State.String)
-
-				UIListView.AddItem(lineName, itemsList[i].Info.String, 0, nil)
-			}
-		})
-	}
+		UpdateStatusBar(
+			config.StatusBar,
+			status,
+			listLen,
+			config.TimerSec,
+			config.ShowSystem.Load(),
+			config.DSN,
+			getMemUsage())
+	})
 }

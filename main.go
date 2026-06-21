@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 
@@ -30,32 +31,42 @@ func main() {
 			ui.CreateUIGrid()
 			ui.SetGlobalHandler(ui.KeyHandler)
 
-			if err := db.ConnectDB(
+			dbStore, err := db.ConnectDB(
 				os.Getenv("MYSQL_USER"),
 				os.Getenv("MYSQL_PASSWORD"),
 				os.Getenv("MYSQL_DSN"),
-			); err != nil {
+			)
+			if err != nil {
 				log.Println(err)
 				os.Exit(1)
 			}
 
-			ui.IsRunning = true
-			if ui.TimerSec <= 0 {
-				ui.TimerSec = DefaultRefreshInterval
+			ui.IsRunningParam.Store(true)
+			if ui.TimerSecParam <= 0 {
+				ui.TimerSecParam = DefaultRefreshInterval
 			}
 
-			// expand slice of strings to slice of interfaces
-			databaseList := make([]interface{}, len(databases))
-			for i, v := range databases {
-				databaseList[i] = v
+			config := ui.WorkerConfig{
+				TimerSec:   ui.TimerSecParam,
+				ShowSystem: &ui.ShowSystem,
+				IsRunning:  &ui.IsRunningParam,
+				StatusBar:  ui.UIStatusBar,
+				ListView:   ui.UIListView,
+				SQLView:    ui.UISQLView,
+				DSN:        os.Getenv("MYSQL_DSN"),
+				Databases:  databases,
+				App:        ui.UIApp,
 			}
 
-			go ui.PSWorker(db.GetProcessList, databaseList)
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			go ui.PSWorker(ctx, dbStore.GetProcessList, nil, config)
 			ui.Run()
 		},
 	}
 
-	mainCmd.Flags().Float32VarP(&ui.TimerSec, "interval", "i", DefaultRefreshInterval, "Refresh interval in seconds")
+	mainCmd.Flags().Float32VarP(&ui.TimerSecParam, "interval", "i", DefaultRefreshInterval, "Refresh interval in seconds")
 	mainCmd.Flags().BoolVarP(&ui.UseMouse, "mouse", "m", false, "Enable mouse interaction")
 	mainCmd.Flags().StringArrayVarP(&databases, "database", "d", []string{}, "Databases list to filter by; example - -d b1 -d db2")
 

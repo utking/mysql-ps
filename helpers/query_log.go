@@ -8,15 +8,19 @@ const (
 )
 
 func WriteSQLLog(logLine string, appendLine bool) error {
+	return writeSQLLogToFile(logLine, SQLLogName, appendLine)
+}
+
+func writeSQLLogToFile(logLine string, fileName string, appendLine bool) error {
 	var (
 		f   *os.File
 		err error
 	)
 
 	if appendLine {
-		f, err = os.OpenFile(SQLLogName, os.O_APPEND|os.O_WRONLY|os.O_CREATE, sqlLogPerm)
+		f, err = os.OpenFile(fileName, os.O_APPEND|os.O_WRONLY|os.O_CREATE, sqlLogPerm)
 	} else {
-		f, err = os.OpenFile(SQLLogName, os.O_TRUNC|os.O_WRONLY|os.O_CREATE, sqlLogPerm)
+		f, err = os.OpenFile(fileName, os.O_TRUNC|os.O_WRONLY|os.O_CREATE, sqlLogPerm)
 	}
 
 	if err == nil {

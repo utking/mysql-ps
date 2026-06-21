@@ -23,16 +23,12 @@ func CreateUIGrid() {
 	UIListView = CreateListViewer(UIApp, "Process List")
 	UIMenuBar = CreateMenuBar()
 
-	UIGrid = tview.NewFlex().SetDirection(tview.FlexRow)
-
-	UIFlex = tview.NewFlex().
-		AddItem(UIGrid.
-			AddItem(UIMenuBar, BlockHeightNone, BlockHeightNone, FocusDisable).
-			AddItem(UIStatusBar, FixedRowsHeight3, BlockHeight2, FocusDisable).
-			AddItem(UIListView, FixedRowsAuto, BlockHeight10, FocusEnable).
-			AddItem(UISQLView, FixedRowsAuto, BlockHeightNone, FocusDisable),
-			FixedRowsAuto, BlockHeight10, FocusEnable,
-		)
+	UIFlex = tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(UIMenuBar, BlockHeightNone, BlockHeightNone, FocusDisable).
+		AddItem(UIStatusBar, FixedRowsHeight3, BlockHeight2, FocusDisable).
+		AddItem(UIListView, FixedRowsAuto, BlockHeight10, FocusEnable).
+		AddItem(UISQLView, FixedRowsAuto, BlockHeightNone, FocusDisable)
+	UIGrid = UIFlex
 }
 
 func SetGlobalHandler(capture func(event *tcell.EventKey) *tcell.EventKey) {
