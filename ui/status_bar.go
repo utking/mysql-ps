@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"os"
 	"runtime"
 
 	"github.com/rivo/tview"
@@ -20,10 +19,14 @@ func CreateStatusBar(title string) *tview.TextView {
 	return bar
 }
 
-func UpdateStatusBar(status string, listLen int) {
-	statusMessage := fmt.Sprintf("%s (%.1fs) | Processes:%4d | DSN: %s | Mem: %.2fMB | Show Sys: %v | ? for Help",
-		status, TimerSec, listLen, os.Getenv("MYSQL_DSN"), getMemUsage(), ShowSystem)
-	UIStatusBar.SetText(statusMessage)
+func FormatStatusBar(status string, timerSec float32, listLen int, showSys bool, dsn string, memUsage float64) string {
+	return fmt.Sprintf("%s (%.1fs) | Processes:%4d | DSN: %s | Mem: %.2fMB | Show Sys: %v | ? for Help",
+		status, timerSec, listLen, dsn, memUsage, showSys)
+}
+
+func UpdateStatusBar(bar *tview.TextView, status string, listLen int, timerSec float32, showSys bool, dsn string, memUsage float64) {
+	statusMessage := FormatStatusBar(status, timerSec, listLen, showSys, dsn, memUsage)
+	bar.SetText(statusMessage)
 }
 
 // Returns the total allocated memory, in MB
