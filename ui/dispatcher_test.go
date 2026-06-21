@@ -15,11 +15,14 @@ import (
 func TestPSWorker_Success(t *testing.T) {
 	var isRunning atomic.Bool
 	isRunning.Store(true)
+	var ShowSystem atomic.Bool
+	ShowSystem.Store(false)
 	config := WorkerConfig{
 		TimerSec:       0.1,
 		IsRunning:      &isRunning,
 		StatusBar:      tview.NewTextView(),
 		ListView:       tview.NewList(),
+		ShowSystem:     &ShowSystem,
 		SQLView:        tview.NewTextView(),
 		OptionalUpdate: func(fn func()) { fn() }, // Added for testability and to avoid hanging in tests
 		Databases:      []string{"db1"},

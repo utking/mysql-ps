@@ -48,7 +48,7 @@ func main() {
 
 			config := ui.WorkerConfig{
 				TimerSec:   ui.TimerSecParam,
-				ShowSystem: ui.ShowSystem,
+				ShowSystem: &ui.ShowSystem,
 				IsRunning:  &ui.IsRunningParam,
 				StatusBar:  ui.UIStatusBar,
 				ListView:   ui.UIListView,

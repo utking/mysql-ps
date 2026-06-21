@@ -14,21 +14,45 @@ func KeyHandler(event *tcell.EventKey) *tcell.EventKey {
 	case rune('p'):
 		current := IsRunningParam.Load()
 		IsRunningParam.Store(!current)
+		select {
+		case updateTriggerChan <- struct{}{}:
+		default:
+		}
 	case rune('s'):
-		ShowSystem = !ShowSystem
+		ShowSystem.Store(!ShowSystem.Load())
+		select {
+		case updateTriggerChan <- struct{}{}:
+		default:
+		}
 	case rune('?'):
 		FlipHelp()
+		select {
+		case updateTriggerChan <- struct{}{}:
+		default:
+		}
 	case rune('l'):
 		UIGrid.ResizeItem(UISQLView, 0, BlockHeight10)
 		SetFocus(UIListView)
+		select {
+		case updateTriggerChan <- struct{}{}:
+		default:
+		}
 	case rune('v'):
 		UIGrid.ResizeItem(UISQLView, 0, BlockHeight10*2)
 		SetFocus(UISQLView)
+		select {
+		case updateTriggerChan <- struct{}{}:
+		default:
+		}
 	default:
 		switch event.Key() {
 		case tcell.KeyESC:
 			HideSQLViewer()
 			SetFocus(UIListView)
+			select {
+			case updateTriggerChan <- struct{}{}:
+			default:
+			}
 		case tcell.KeyCtrlS:
 			if UIListView.GetItemCount() > 0 {
 				pri, sec := UIListView.GetItemText(UIListView.GetCurrentItem())

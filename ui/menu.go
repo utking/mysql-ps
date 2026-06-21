@@ -16,15 +16,15 @@ const (
 
 var (
 	menuLabels = []string{
-		"Pause (P)",
-		"Show sys DB (S)",
+		"Pause (p)",
+		"Show sys DB (s)",
 		"Show View (Ent)",
 		"Hide View (Esc)",
-		"To list (L)",
-		"To view (V)",
+		"To list (l)",
+		"To view (v)",
 		"Save SQL (Crtl+S)",
 		"Append SQL (Ctrl+A)",
-		"Quit (Q)",
+		"Quit (q)",
 	}
 	MenuVisible bool
 )

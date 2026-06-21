@@ -28,6 +28,7 @@ func CreateUIGrid() {
 		AddItem(UIStatusBar, FixedRowsHeight3, BlockHeight2, FocusDisable).
 		AddItem(UIListView, FixedRowsAuto, BlockHeight10, FocusEnable).
 		AddItem(UISQLView, FixedRowsAuto, BlockHeightNone, FocusDisable)
+	UIGrid = UIFlex
 }
 
 func SetGlobalHandler(capture func(event *tcell.EventKey) *tcell.EventKey) {
