@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -12,22 +13,33 @@ import (
 )
 
 var (
-	TimerSec   float32
-	IsRunning  bool
-	ShowSystem bool
-	UseMouse   bool
-	ListLengh  int
+	TimerSecParam  float32
+	IsRunningParam atomic.Bool
+	ShowSystem     bool
+	UseMouse       bool
 )
 
 type WorkerConfig struct {
-	TimerSec   float32
-	ShowSystem bool
-	IsRunning  *bool
-	StatusBar  *tview.TextView
-	ListView   *tview.List
-	SQLView    *tview.TextView
-	DSN        string
-	Databases  []string
+	TimerSec       float32
+	ShowSystem     bool
+	IsRunning      *atomic.Bool
+	StatusBar      *tview.TextView
+	ListView       *tview.List
+	SQLView        *tview.TextView
+	DSN            string
+	Databases      []string
+	App            *tview.Application
+	OptionalUpdate func(func()) // Changed from Update to OptionalUpdate
+}
+
+func (c *WorkerConfig) Update(fn func()) {
+	if c.OptionalUpdate != nil {
+		c.OptionalUpdate(fn)
+	} else if c.App != nil {
+		c.App.QueueUpdateDraw(fn)
+	} else {
+		fn()
+	}
 }
 
 func Run() {
@@ -43,11 +55,11 @@ func Run() {
 
 func PSWorker(
 	ctx context.Context,
-	listFn func([]string, []interface{}) ([]helpers.ProcessItem, error),
-	databases []interface{},
+	listFn func([]string, []any) ([]helpers.ProcessItem, error),
+	databases []any,
 	config WorkerConfig,
 ) {
-	ticker := time.NewTicker(time.Millisecond * time.Duration(1000*config.TimerSec))
+	ticker := time.NewTicker(time.Duration(1000 * float64(config.TimerSec)))
 	defer ticker.Stop()
 
 	for {
@@ -56,23 +68,27 @@ func PSWorker(
 			return
 		case <-ticker.C:
 			var listFilters []string
-			if !config.ShowSystem {
+			if !ShowSystem {
 				listFilters = []string{"DB != 'sys'"}
 			} else {
 				listFilters = []string{}
 			}
 
-			if *config.IsRunning == false {
+			if config.IsRunning.Load() == false {
 				status := "Paused"
-				listLen := 0 // Initialize local listLen
-				UIApp.QueueUpdateDraw(func() {
+				listLen := 0
+
+				// TODO: Change to not run so fast (ahead of the timer)
+				config.Update(func() {
 					config.StatusBar.SetBorderColor(tcell.ColorYellow)
 					UpdateStatusBar(
 						config.StatusBar,
 						status,
 						listLen,
 						config.TimerSec,
-						config.ShowSystem, config.DSN, getMemUsage())
+						config.ShowSystem,
+						config.DSN,
+						getMemUsage())
 				})
 				continue
 			}
@@ -82,25 +98,18 @@ func PSWorker(
 				itemsList []helpers.ProcessItem
 			)
 
-			status := "Running"
-
-			UIApp.QueueUpdateDraw(func() {
-				config.StatusBar.SetBorderColor(tcell.ColorWhite)
-				config.ListView.Clear()
-			})
-
-			// Convert databases from config to []interface{} for listFn
-			dbInterfaces := make([]interface{}, len(config.Databases))
+			dbInterfaces := make([]any, len(config.Databases))
 			for i, v := range config.Databases {
 				dbInterfaces[i] = v
 			}
 
 			if itemsList, err = listFn(listFilters, dbInterfaces); err != nil {
 				config.SQLView.SetText(err.Error())
-				*config.IsRunning = false
+				config.IsRunning.Store(false)
 				continue
 			}
 
+			status := "Running"
 			listLen := len(itemsList)
 
 			for i := range itemsList {
@@ -112,13 +121,10 @@ func PSWorker(
 				}
 			}
 
-			UpdateStatusBar(
-				config.StatusBar,
-				status,
-				listLen,
-				config.TimerSec,
-				config.ShowSystem, config.DSN, getMemUsage())
-			UIApp.QueueUpdateDraw(func() {
+			// TODO: Change to not run so fast (ahead of the timer)
+			config.Update(func() {
+				config.StatusBar.SetBorderColor(tcell.ColorWhite)
+				config.ListView.Clear()
 				for i := range itemsList {
 					if strings.Contains(
 						itemsList[i].Info.String,
@@ -136,6 +142,14 @@ func PSWorker(
 
 					config.ListView.AddItem(lineName, itemsList[i].Info.String, 0, nil)
 				}
+				UpdateStatusBar(
+					config.StatusBar,
+					status,
+					listLen,
+					config.TimerSec,
+					config.ShowSystem,
+					config.DSN,
+					getMemUsage())
 			})
 		}
 	}

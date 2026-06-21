@@ -16,7 +16,7 @@ func TestFormatStatusBar(t *testing.T) {
 
 	msg := FormatStatusBar(status, timerSec, listLen, showSys, dsn, memUsage)
 
-	expected := "Running (1.5s) | Processes:10   | DSN: mysql://user:pass@tcp(host:3306)/db | Mem: 123.45MB | Show Sys: true | ? for Help"
+	expected := "Running (1.5s) | Processes:  10 | DSN: mysql://user:pass@tcp(host:3306)/db | Mem: 123.45MB | Show Sys: true | ? for Help"
 	if msg != expected {
 		t.Errorf("Expected %q, got %q", expected, msg)
 	}
@@ -33,7 +33,7 @@ func TestUpdateStatusBar(t *testing.T) {
 
 	UpdateStatusBar(bar, status, listLen, timerSec, showSys, dsn, memUsage)
 
-	expected := "Running (1.5s) | Processes:10   | DSN: mysql://user:pass@tcp(host:3306)/db | Mem: 123.45MB | Show Sys: true | ? for Help"
+	expected := "Running (1.5s) | Processes:  10 | DSN: mysql://user:pass@tcp(host:3306)/db | Mem: 123.45MB | Show Sys: true | ? for Help"
 	if bar.GetText(true) != expected {
 		t.Errorf("Expected %q, got %q", expected, bar.GetText(true))
 	}

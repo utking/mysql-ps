@@ -41,20 +41,21 @@ func main() {
 				os.Exit(1)
 			}
 
-			ui.IsRunning = true
-			if ui.TimerSec <= 0 {
-				ui.TimerSec = DefaultRefreshInterval
+			ui.IsRunningParam.Store(true)
+			if ui.TimerSecParam <= 0 {
+				ui.TimerSecParam = DefaultRefreshInterval
 			}
 
 			config := ui.WorkerConfig{
-				TimerSec:   ui.TimerSec,
+				TimerSec:   ui.TimerSecParam,
 				ShowSystem: ui.ShowSystem,
-				IsRunning:  &ui.IsRunning,
+				IsRunning:  &ui.IsRunningParam,
 				StatusBar:  ui.UIStatusBar,
 				ListView:   ui.UIListView,
 				SQLView:    ui.UISQLView,
 				DSN:        os.Getenv("MYSQL_DSN"),
 				Databases:  databases,
+				App:        ui.UIApp,
 			}
 
 			ctx, cancel := context.WithCancel(context.Background())
@@ -65,7 +66,7 @@ func main() {
 		},
 	}
 
-	mainCmd.Flags().Float32VarP(&ui.TimerSec, "interval", "i", DefaultRefreshInterval, "Refresh interval in seconds")
+	mainCmd.Flags().Float32VarP(&ui.TimerSecParam, "interval", "i", DefaultRefreshInterval, "Refresh interval in seconds")
 	mainCmd.Flags().BoolVarP(&ui.UseMouse, "mouse", "m", false, "Enable mouse interaction")
 	mainCmd.Flags().StringArrayVarP(&databases, "database", "d", []string{}, "Databases list to filter by; example - -d b1 -d db2")
 

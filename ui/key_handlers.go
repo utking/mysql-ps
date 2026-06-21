@@ -12,7 +12,8 @@ func KeyHandler(event *tcell.EventKey) *tcell.EventKey {
 	case rune('q'):
 		StopApp()
 	case rune('p'):
-		IsRunning = !IsRunning
+		current := IsRunningParam.Load()
+		IsRunningParam.Store(!current)
 	case rune('s'):
 		ShowSystem = !ShowSystem
 	case rune('?'):
