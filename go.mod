@@ -9,6 +9,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/rivo/tview v0.0.0-20250625164341-a4a78f1e05cb
 	github.com/spf13/cobra v1.10.2
+	github.com/stretchr/testify v1.11.1
 	gopkg.in/ini.v1 v1.67.3
 )
 
@@ -25,4 +26,5 @@ require (
 	golang.org/x/sys v0.46.0 // indirect
 	golang.org/x/term v0.44.0 // indirect
 	golang.org/x/text v0.38.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
