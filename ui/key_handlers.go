@@ -56,5 +56,7 @@ func OpenSQLQuery(i int, s1, s2 string, r rune) {
 
 	PreviewSQL(UISQLView, pri, sec)
 	UIApp.SetFocus(UIListView)
-	UIGrid.ResizeItem(UISQLView, 0, BlockHeight10)
+	if UIGrid != nil {
+		UIGrid.ResizeItem(UISQLView, 0, BlockHeight10)
+	}
 }
