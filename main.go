@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 
@@ -50,7 +51,9 @@ func main() {
 				databaseList[i] = v
 			}
 
-			go ui.PSWorker(db.GetProcessList, databaseList)
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			go ui.PSWorker(ctx, db.GetProcessList, databaseList)
 			ui.Run()
 		},
 	}
