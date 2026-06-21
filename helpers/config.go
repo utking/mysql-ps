@@ -14,13 +14,18 @@ var (
 	myCnfPath = "~/.my.cnf"
 )
 
-func LoadConfig() {
+func ExpandMyCnfPath() string {
 	if strings.HasPrefix(myCnfPath, "~/") {
 		dirname, _ := os.UserHomeDir()
-		myCnfPath = filepath.Join(dirname, myCnfPath[2:])
+		return filepath.Join(dirname, myCnfPath[2:])
 	}
+	return myCnfPath
+}
 
-	cfg, err := ini.Load(myCnfPath)
+func LoadConfig() {
+	path := ExpandMyCnfPath()
+
+	cfg, err := ini.Load(path)
 
 	if err == nil {
 		host := cfg.Section("client").Key("host").String()
