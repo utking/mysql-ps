@@ -28,6 +28,14 @@ func ConnectDB(user, password, dsn string) (*DBStore, error) {
 	return &DBStore{db: conn}, nil
 }
 
+func (s *DBStore) Close() error {
+	type closer interface{ Close() error }
+	if c, ok := s.db.(closer); ok {
+		return c.Close()
+	}
+	return nil
+}
+
 func (s *DBStore) GetProcessList(filters []string, databases []interface{}) ([]helpers.ProcessItem, error) {
 	list := []helpers.ProcessItem{}
 	filterBuilder := strings.Builder{}
@@ -40,17 +48,11 @@ func (s *DBStore) GetProcessList(filters []string, databases []interface{}) ([]h
 	)
 
 	if len(databases) > 0 {
-		filterBuilder.WriteString(" AND DB IN (")
-		// every database must be added to string as ? placeholder
-		// and separated from the previous with a comma.
-		// this is done to avoid SQL injection
+		placeholders := make([]string, len(databases))
 		for i := range databases {
-			filterBuilder.WriteString("?")
-			if i < len(databases)-1 {
-				filterBuilder.WriteString(",")
-			}
+			placeholders[i] = "?"
 		}
-		filterBuilder.WriteString(")")
+		filterBuilder.WriteString(" AND DB IN (" + strings.Join(placeholders, ",") + ")")
 	}
 
 	for _, filter := range filters {

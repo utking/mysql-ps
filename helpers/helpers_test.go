@@ -49,20 +49,24 @@ func TestTruncateQuery(t *testing.T) {
 
 func TestHostDropPort(t *testing.T) {
 	tests := []struct {
-		host     string
+		name     string
+		input    string
 		expected string
 	}{
-		{"localhost:3306", "localhost"},
-		{"127.0.0.1:8080", "127.0.0.1"},
-		{"mysql-server", "mysql-server"},
-		{"db_host:port1:port2", "db_host"}, // Should take first part before colons
-		{"", ""},
+		{"Standard case", "127.0.0.1:3306", "127.0.0.1"},
+		{"Localhost port", "localhost:8080", "localhost"},
+		{"No port", "mysql-server", "mysql-server"},
+		{"Multiple colons", "db_host.example.com:3306:8080", "db_host.example.com"},
+		{"Missing host", ":3306", ""},
+		{"Empty string", "", ""},
 	}
 
 	for _, tt := range tests {
-		got := HostDropPort(tt.host)
-		if got != tt.expected {
-			t.Errorf("HostDropPort(%q) = %q; want %q", tt.host, got, tt.expected)
-		}
+		t.Run(tt.name, func(t *testing.T) {
+			got := HostDropPort(tt.input)
+			if got != tt.expected {
+				t.Errorf("HostDropPort(%q) = %q; want %q", tt.input, got, tt.expected)
+			}
+		})
 	}
 }

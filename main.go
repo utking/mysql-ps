@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	DefaultRefreshInterval = 2.0
+	DefaultRefreshInterval = float32(2.0)
 )
 
 var (
@@ -23,10 +23,10 @@ var (
 
 func main() {
 	var mainCmd = &cobra.Command{
-		Use:   "",
+		Use:   "mysql-ps",
 		Short: "MySQL Process List",
 		Long:  `Show MySQL Process List, with refreshing it every N seconds`,
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			helpers.LoadConfig()
 			ui.CreateUIGrid()
 			ui.SetGlobalHandler(ui.KeyHandler)
@@ -37,9 +37,10 @@ func main() {
 				os.Getenv("MYSQL_DSN"),
 			)
 			if err != nil {
-				log.Println(err)
+				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
+			defer dbStore.Close()
 
 			ui.IsRunningParam.Store(true)
 			if ui.TimerSecParam <= 0 {
@@ -61,7 +62,7 @@ func main() {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 
-			go ui.PSWorker(ctx, dbStore.GetProcessList, nil, config)
+			go ui.PSWorker(ctx, dbStore.GetProcessList, config)
 			ui.Run()
 		},
 	}

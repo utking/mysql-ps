@@ -63,7 +63,6 @@ func Run() {
 func PSWorker(
 	ctx context.Context,
 	listFn func([]string, []any) ([]helpers.ProcessItem, error),
-	databases []any,
 	config WorkerConfig,
 ) {
 	ticker := time.NewTicker(time.Duration(float64(time.Second) * float64(config.TimerSec)))
