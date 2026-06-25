@@ -37,23 +37,24 @@ func TestDBStore_GetProcessList(t *testing.T) {
 			expectedCount: 1,
 		},
 		{
-			name:          "Database filter only",
+			name:          "Multiple databases",
 			filters:       nil,
-			databases:     []interface{}{"db1", "db2"},
-			expectedQuery: `SELECT * FROM INFORMATION_SCHEMA.PROCESSLIST WHERE COMMAND != 'Sleep' AND USER != 'system user' AND DB IN (?,?) ORDER BY time DESC`,
-			mockArgs:      []interface{}{"db1", "db2"},
+			databases:     []interface{}{"db1", "db2", "db3"},
+			expectedQuery: `SELECT * FROM INFORMATION_SCHEMA.PROCESSLIST WHERE COMMAND != 'Sleep' AND USER != 'system user' AND DB IN (?,?,?) ORDER BY time DESC`,
+			mockArgs:      []interface{}{"db1", "db2", "db3"},
 			expectErr:     false,
-			expectedCount: 2,
+			expectedCount: 3,
 		},
 		{
-			name:          "Arbitrary filters only",
-			filters:       []string{"state='Sending query'"},
+			name:          "Potential injection (not blocked yet)",
+			filters:       []string{"state='Sending query'; DROP TABLE users--"},
 			databases:     nil,
-			expectedQuery: `SELECT * FROM INFORMATION_SCHEMA.PROCESSLIST WHERE COMMAND != 'Sleep' AND USER != 'system user' AND state='Sending query' ORDER BY time DESC`,
+			expectedQuery: `SELECT * FROM INFORMATION_SCHEMA.PROCESSLIST WHERE COMMAND != 'Sleep' AND USER != 'system user' AND state='Sending query'; DROP TABLE users-- ORDER BY time DESC`,
 			mockArgs:      nil,
 			expectErr:     false,
 			expectedCount: 1,
 		},
+
 		{
 			name:          "Combined filters",
 			filters:       []string{"state='Sending query'"},
@@ -81,14 +82,33 @@ func TestDBStore_GetProcessList(t *testing.T) {
 			expectedCount: 1,
 		},
 		{
-			name:          "Nil arbitrary filters",
+			name:          "Many databases",
 			filters:       nil,
+			databases:     []interface{}{"db1", "db2", "db3", "db4", "db5"},
+			expectedQuery: `SELECT * FROM INFORMATION_SCHEMA.PROCESSLIST WHERE COMMAND != 'Sleep' AND USER != 'system user' AND DB IN (?,?,?,?,?) ORDER BY time DESC`,
+			mockArgs:      []interface{}{"db1", "db2", "db3", "db4", "db5"},
+			expectErr:     false,
+			expectedCount: 5,
+		},
+		{
+			name:          "Complex combined filters",
+			filters:       []string{"state='Sending query'", "user_id=100", "priority='high'"},
+			databases:     []interface{}{"db1", "db2", "db3", "db4"},
+			expectedQuery: `SELECT * FROM INFORMATION_SCHEMA.PROCESSLIST WHERE COMMAND != 'Sleep' AND USER != 'system user' AND DB IN (?,?,?,?) AND state='Sending query' AND user_id=100 AND priority='high' ORDER BY time DESC`,
+			mockArgs:      []interface{}{"db1", "db2", "db3", "db4"},
+			expectErr:     false,
+			expectedCount: 12,
+		},
+		{
+			name:          "Injection Baseline - multiple statements",
+			filters:       []string{"state='Sending query'; DROP TABLE users;--", "time > 1000"},
 			databases:     nil,
-			expectedQuery: `SELECT * FROM INFORMATION_SCHEMA.PROCESSLIST WHERE COMMAND != 'Sleep' AND USER != 'system user' ORDER BY time DESC`,
+			expectedQuery: `SELECT * FROM INFORMATION_SCHEMA.PROCESSLIST WHERE COMMAND != 'Sleep' AND USER != 'system user' AND state='Sending query'; DROP TABLE users;-- AND time > 1000 ORDER BY time DESC`,
 			mockArgs:      nil,
 			expectErr:     false,
 			expectedCount: 1,
 		},
+
 	}
 
 	for _, tt := range tests {
@@ -112,7 +132,7 @@ func TestDBStore_GetProcessList(t *testing.T) {
 			}
 
 			mockQuerier := &MockQuerier{SelectFunc: selectFunc}
-			store := &DBStore{db: mockQuerier}
+			store := &DBStore{Db: mockQuerier}
 
 			list, err := store.GetProcessList(tt.filters, tt.databases)
 

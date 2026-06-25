@@ -21,13 +21,18 @@ func TestExpandMyCnfPath(t *testing.T) {
 	}
 }
 
-func TestLoadConfigNoPanic(t *testing.T) {
-	// Just ensure it doesn't panic even if the file is missing
+func TestLoadConfigMissingEnvVars(t *testing.T) {
+	// Clear relevant environment variables to simulate a clean state
+	os.Unsetenv("MYSQL_DSN")
+	os.Unsetenv("MYSQL_USER")
+	os.Unsetenv("MYSQL_PASSWORD")
+
 	defer func() {
 		if r := recover(); r != nil {
-			t.Errorf("LoadConfig panicked: %v", r)
+			t.Errorf("LoadConfig panicked with missing env vars: %v", r)
 		}
 	}()
+
 	LoadConfig()
 }
 

@@ -13,7 +13,7 @@ type Querier interface {
 }
 
 type DBStore struct {
-	db Querier
+	Db Querier
 }
 
 func ConnectDB(user, password, dsn string) (*DBStore, error) {
@@ -25,7 +25,15 @@ func ConnectDB(user, password, dsn string) (*DBStore, error) {
 		return nil, err
 	}
 
-	return &DBStore{db: conn}, nil
+	return &DBStore{Db: conn}, nil
+}
+
+func (s *DBStore) Close() error {
+	type closer interface{ Close() error }
+	if c, ok := s.Db.(closer); ok {
+		return c.Close()
+	}
+	return nil
 }
 
 func (s *DBStore) GetProcessList(filters []string, databases []interface{}) ([]helpers.ProcessItem, error) {
@@ -40,17 +48,11 @@ func (s *DBStore) GetProcessList(filters []string, databases []interface{}) ([]h
 	)
 
 	if len(databases) > 0 {
-		filterBuilder.WriteString(" AND DB IN (")
-		// every database must be added to string as ? placeholder
-		// and separated from the previous with a comma.
-		// this is done to avoid SQL injection
+		placeholders := make([]string, len(databases))
 		for i := range databases {
-			filterBuilder.WriteString("?")
-			if i < len(databases)-1 {
-				filterBuilder.WriteString(",")
-			}
+			placeholders[i] = "?"
 		}
-		filterBuilder.WriteString(")")
+		filterBuilder.WriteString(" AND DB IN (" + strings.Join(placeholders, ",") + ")")
 	}
 
 	for _, filter := range filters {
@@ -59,7 +61,7 @@ func (s *DBStore) GetProcessList(filters []string, databases []interface{}) ([]h
 
 	filterBuilder.WriteString(" ORDER BY time DESC")
 
-	if err := s.db.Select(
+	if err := s.Db.Select(
 		&list,
 		filterBuilder.String(),
 		databases...,
