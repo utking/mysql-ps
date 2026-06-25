@@ -13,7 +13,7 @@ type Querier interface {
 }
 
 type DBStore struct {
-	Db Querier
+	db Querier
 }
 
 func ConnectDB(user, password, dsn string) (*DBStore, error) {
@@ -25,12 +25,12 @@ func ConnectDB(user, password, dsn string) (*DBStore, error) {
 		return nil, err
 	}
 
-	return &DBStore{Db: conn}, nil
+	return &DBStore{db: conn}, nil
 }
 
 func (s *DBStore) Close() error {
 	type closer interface{ Close() error }
-	if c, ok := s.Db.(closer); ok {
+	if c, ok := s.db.(closer); ok {
 		return c.Close()
 	}
 	return nil
@@ -61,7 +61,7 @@ func (s *DBStore) GetProcessList(filters []string, databases []interface{}) ([]h
 
 	filterBuilder.WriteString(" ORDER BY time DESC")
 
-	if err := s.Db.Select(
+	if err := s.db.Select(
 		&list,
 		filterBuilder.String(),
 		databases...,

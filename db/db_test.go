@@ -108,7 +108,6 @@ func TestDBStore_GetProcessList(t *testing.T) {
 			expectErr:     false,
 			expectedCount: 1,
 		},
-
 	}
 
 	for _, tt := range tests {
@@ -132,7 +131,7 @@ func TestDBStore_GetProcessList(t *testing.T) {
 			}
 
 			mockQuerier := &MockQuerier{SelectFunc: selectFunc}
-			store := &DBStore{Db: mockQuerier}
+			store := &DBStore{db: mockQuerier}
 
 			list, err := store.GetProcessList(tt.filters, tt.databases)
 
