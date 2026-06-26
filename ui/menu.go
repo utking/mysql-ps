@@ -1,9 +1,5 @@
 package ui
 
-import (
-	"github.com/rivo/tview"
-)
-
 const (
 	FocusEnable      = true
 	FocusDisable     = false
@@ -14,27 +10,4 @@ const (
 	BlockHeight10    = 10
 )
 
-var (
-	menuLabels = []string{
-		"Pause (p)",
-		"Show sys DB (s)",
-		"Show View (Ent)",
-		"Hide View (Esc)",
-		"To list (l)",
-		"To view (v)",
-		"Save SQL (Crtl+S)",
-		"Append SQL (Ctrl+A)",
-		"Quit (q)",
-	}
-	MenuVisible bool
-)
 
-func CreateMenuBar() *tview.Form {
-	menuBar := tview.NewForm()
-
-	for _, lbl := range menuLabels {
-		menuBar = menuBar.AddButton(lbl, func() {})
-	}
-
-	return menuBar
-}

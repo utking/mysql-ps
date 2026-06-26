@@ -19,8 +19,8 @@ func PreviewSQL(reqView *tview.TextView, pri, sqlStr string) {
 	reqView.SetText(sqlStr)
 }
 
-func HideSQLViewer() {
-	UISQLView.Clear()
-	UISQLView.SetTitle("SQL View")
-	UIGrid.ResizeItem(UISQLView, 0, BlockHeightNone)
+func (c *UIComponents) HideSQLViewer() {
+	c.SQLView.Clear()
+	c.SQLView.SetTitle("SQL View")
+	c.Grid.ResizeItem(c.SQLView, 0, BlockHeightNone)
 }

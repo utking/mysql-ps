@@ -3,6 +3,7 @@ package ui
 import (
 	"database/sql"
 
+	"github.com/utking/mysql-ps/db"
 	"github.com/utking/mysql-ps/helpers"
 )
 
@@ -39,8 +40,8 @@ var mockItems = []helpers.ProcessItem{
 	},
 }
 
-func MockListFn() func([]string, []interface{}) ([]helpers.ProcessItem, error) {
-	return func(filters []string, dbs []interface{}) ([]helpers.ProcessItem, error) {
+func MockListFn() func([]db.Filter, []interface{}) ([]helpers.ProcessItem, error) {
+	return func(filters []db.Filter, dbs []interface{}) ([]helpers.ProcessItem, error) {
 		// For now, just return the mockItems.
 		// In tests, you can choose to filter them or return an error.
 		return mockItems, nil

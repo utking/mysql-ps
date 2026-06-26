@@ -4,57 +4,38 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"sync/atomic"
+	"sync"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
+	"github.com/utking/mysql-ps/db"
 	"github.com/utking/mysql-ps/helpers"
 )
 
-var (
-	TimerSecParam  float32
-	IsRunningParam atomic.Bool
-	ShowSystem     atomic.Bool
-	UseMouse       bool
-)
-
-var updateTriggerChan chan struct{}
-var lastManualUpdate time.Time
-
-func init() {
-	updateTriggerChan = make(chan struct{}, 1)
-}
-
 type WorkerConfig struct {
-	TimerSec       float32
-	ShowSystem     *atomic.Bool
-	IsRunning      *atomic.Bool
-	StatusBar      *tview.TextView
-	ListView       *tview.List
-	SQLView        *tview.TextView
+	UI             *UIComponents
 	DSN            string
 	Databases      []string
-	App            *tview.Application
-	OptionalUpdate func(func()) // Changed from Update to OptionalUpdate
+	WG             *sync.WaitGroup
+	OptionalUpdate func(func())
 }
 
 func (c *WorkerConfig) Update(fn func()) {
 	if c.OptionalUpdate != nil {
 		c.OptionalUpdate(fn)
-	} else if c.App != nil {
-		c.App.QueueUpdateDraw(fn)
+	} else if c.UI != nil && c.UI.App != nil {
+		c.UI.App.QueueUpdateDraw(fn)
 	} else {
 		fn()
 	}
 }
 
-func Run() {
-	UIListView.SetSelectedFunc(OpenSQLQuery)
+func (c *UIComponents) Run() {
+	c.ListView.SetSelectedFunc(c.OpenSQLQuery)
 
-	if err := UIApp.
-		SetRoot(UIFlex, true).
-		EnableMouse(UseMouse).
+	if err := c.App.
+		SetRoot(c.Pages, true).
+		EnableMouse(c.UseMouse).
 		Run(); err != nil {
 		panic(err)
 	}
@@ -62,10 +43,14 @@ func Run() {
 
 func PSWorker(
 	ctx context.Context,
-	listFn func([]string, []any) ([]helpers.ProcessItem, error),
+	listFn func([]db.Filter, []any) ([]helpers.ProcessItem, error),
 	config WorkerConfig,
 ) {
-	ticker := time.NewTicker(time.Duration(float64(time.Second) * float64(config.TimerSec)))
+	if config.WG != nil {
+		defer config.WG.Done()
+	}
+
+	ticker := time.NewTicker(time.Duration(float64(time.Second) * float64(config.UI.TimerSec)))
 	defer ticker.Stop()
 
 	for {
@@ -74,7 +59,7 @@ func PSWorker(
 			return
 		case <-ticker.C:
 			performUpdate(&config, listFn)
-		case <-updateTriggerChan:
+		case <-config.UI.updateTriggerChan:
 			performUpdate(&config, listFn)
 		}
 	}
@@ -82,27 +67,28 @@ func PSWorker(
 
 func performUpdate(
 	config *WorkerConfig,
-	listFn func([]string, []any) ([]helpers.ProcessItem, error),
+	listFn func([]db.Filter, []any) ([]helpers.ProcessItem, error),
 ) {
-	var listFilters []string
-	if !ShowSystem.Load() {
-		listFilters = []string{"DB != 'sys'"}
+	ui := config.UI
+	var listFilters []db.Filter
+	if !ui.ShowSystem.Load() {
+		listFilters = []db.Filter{{Column: "DB", Operator: "!=", Value: "sys"}}
 	} else {
-		listFilters = []string{}
+		listFilters = []db.Filter{}
 	}
 
-	if config.IsRunning.Load() == false {
+	if ui.IsRunning.Load() == false {
 		status := "Paused"
 		listLen := 0
 
 		config.Update(func() {
-			config.StatusBar.SetBorderColor(tcell.ColorYellow)
+			ui.StatusBar.SetBorderColor(tcell.ColorYellow)
 			UpdateStatusBar(
-				config.StatusBar,
+				ui.StatusBar,
 				status,
 				listLen,
-				config.TimerSec,
-				ShowSystem.Load(),
+				ui.TimerSec,
+				ui.ShowSystem.Load(),
 				config.DSN,
 				getMemUsage())
 		})
@@ -120,49 +106,49 @@ func performUpdate(
 	}
 
 	if itemsList, err = listFn(listFilters, dbInterfaces); err != nil {
-		config.SQLView.SetText(err.Error())
-		config.IsRunning.Store(false)
+		ui.SQLView.SetText(err.Error())
+		ui.IsRunning.Store(false)
 		return
 	}
 
 	status := "Running"
 	listLen := len(itemsList)
 
-	for i := range itemsList {
-		if strings.Contains(
-			itemsList[i].Info.String,
-			"INFORMATION_SCHEMA.PROCESSLIST",
-		) {
+	type label struct {
+		Name    string
+		Content string
+	}
+	var labels []label
+
+	for _, item := range itemsList {
+		if strings.Contains(item.Info.String, "INFORMATION_SCHEMA.PROCESSLIST") {
 			listLen--
+			continue
 		}
+		labels = append(labels, label{
+			Name: fmt.Sprintf("%d: %s (%ds) from %s@%s - %s",
+				item.ID,
+				item.DB.String,
+				item.Time,
+				item.User,
+				helpers.HostDropPort(item.Host),
+				item.State.String),
+			Content: item.Info.String,
+		})
 	}
 
 	config.Update(func() {
-		config.StatusBar.SetBorderColor(tcell.ColorWhite)
-		config.ListView.Clear()
-		for i := range itemsList {
-			if strings.Contains(
-				itemsList[i].Info.String,
-				"INFORMATION_SCHEMA.PROCESSLIST",
-			) {
-				continue
-			}
-			lineName := fmt.Sprintf("%d: %s (%ds) from %s@%s - %s",
-				itemsList[i].ID,
-				itemsList[i].DB.String,
-				itemsList[i].Time,
-				itemsList[i].User,
-				helpers.HostDropPort(itemsList[i].Host),
-				itemsList[i].State.String)
-
-			config.ListView.AddItem(lineName, itemsList[i].Info.String, 0, nil)
+		ui.StatusBar.SetBorderColor(tcell.ColorWhite)
+		ui.ListView.Clear()
+		for _, l := range labels {
+			ui.ListView.AddItem(l.Name, l.Content, 0, nil)
 		}
 		UpdateStatusBar(
-			config.StatusBar,
+			ui.StatusBar,
 			status,
 			listLen,
-			config.TimerSec,
-			config.ShowSystem.Load(),
+			ui.TimerSec,
+			ui.ShowSystem.Load(),
 			config.DSN,
 			getMemUsage())
 	})

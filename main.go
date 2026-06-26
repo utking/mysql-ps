@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
+	"sync"
 
 	"github.com/spf13/cobra"
 	"github.com/utking/mysql-ps/db"
@@ -22,57 +22,59 @@ var (
 )
 
 func main() {
+	uiComponents := ui.NewUI()
+
 	var mainCmd = &cobra.Command{
 		Use:   "mysql-ps",
 		Short: "MySQL Process List",
 		Long:  `Show MySQL Process List, with refreshing it every N seconds`,
-		Run: func(_ *cobra.Command, _ []string) {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			helpers.LoadConfig()
-			ui.CreateUIGrid()
-			ui.SetGlobalHandler(ui.KeyHandler)
+			uiComponents.SetGlobalHandler()
 
-			dbStore, err := db.ConnectDB(
-				os.Getenv("MYSQL_USER"),
-				os.Getenv("MYSQL_PASSWORD"),
-				os.Getenv("MYSQL_DSN"),
-			)
+			dsn := os.Getenv("MYSQL_DSN")
+			user := os.Getenv("MYSQL_USER")
+			password := os.Getenv("MYSQL_PASSWORD")
+
+			dbStore, err := db.ConnectDB(user, password, dsn)
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
+				return err
 			}
-			defer dbStore.Close()
 
-			ui.IsRunningParam.Store(true)
-			if ui.TimerSecParam <= 0 {
-				ui.TimerSecParam = DefaultRefreshInterval
+			uiComponents.IsRunning.Store(true)
+			if uiComponents.TimerSec <= 0 {
+				uiComponents.TimerSec = DefaultRefreshInterval
 			}
+
+			var wg sync.WaitGroup
 
 			config := ui.WorkerConfig{
-				TimerSec:   ui.TimerSecParam,
-				ShowSystem: &ui.ShowSystem,
-				IsRunning:  &ui.IsRunningParam,
-				StatusBar:  ui.UIStatusBar,
-				ListView:   ui.UIListView,
-				SQLView:    ui.UISQLView,
-				DSN:        os.Getenv("MYSQL_DSN"),
-				Databases:  databases,
-				App:        ui.UIApp,
+				UI:        uiComponents,
+				DSN:       dsn,
+				Databases: databases,
+				WG:        &wg,
 			}
 
 			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
+			defer func() {
+				cancel()
+				wg.Wait()
+				dbStore.Close()
+			}()
 
+			wg.Add(1)
 			go ui.PSWorker(ctx, dbStore.GetProcessList, config)
-			ui.Run()
+			uiComponents.Run()
+
+			return nil
 		},
 	}
 
-	mainCmd.Flags().Float32VarP(&ui.TimerSecParam, "interval", "i", DefaultRefreshInterval, "Refresh interval in seconds")
-	mainCmd.Flags().BoolVarP(&ui.UseMouse, "mouse", "m", false, "Enable mouse interaction")
+	mainCmd.Flags().Float32VarP(&uiComponents.TimerSec, "interval", "i", DefaultRefreshInterval, "Refresh interval in seconds")
+	mainCmd.Flags().BoolVarP(&uiComponents.UseMouse, "mouse", "m", false, "Enable mouse interaction")
 	mainCmd.Flags().StringArrayVarP(&databases, "database", "d", []string{}, "Databases list to filter by; example - -d b1 -d db2")
 
 	if err := mainCmd.Execute(); err != nil {
-		mainCmd.Println(err)
-		os.Exit(1)
+		mainCmd.PrintErrln(err)
 	}
 }
