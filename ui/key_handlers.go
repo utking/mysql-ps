@@ -14,45 +14,27 @@ func (c *UIComponents) KeyHandler(event *tcell.EventKey) *tcell.EventKey {
 	case rune('p'):
 		current := c.IsRunning.Load()
 		c.IsRunning.Store(!current)
-		select {
-		case c.updateTriggerChan <- struct{}{}:
-		default:
-		}
+		c.triggerUpdate()
 	case rune('s'):
 		c.ShowSystem.Store(!c.ShowSystem.Load())
-		select {
-		case c.updateTriggerChan <- struct{}{}:
-		default:
-		}
+		c.triggerUpdate()
 	case rune('?'):
 		c.FlipHelp()
-		select {
-		case c.updateTriggerChan <- struct{}{}:
-		default:
-		}
+		c.triggerUpdate()
 	case rune('l'):
 		c.Grid.ResizeItem(c.SQLView, 0, BlockHeight10)
 		c.SetFocus(c.ListView)
-		select {
-		case c.updateTriggerChan <- struct{}{}:
-		default:
-		}
+		c.triggerUpdate()
 	case rune('v'):
 		c.Grid.ResizeItem(c.SQLView, 0, BlockHeight10*2)
 		c.SetFocus(c.SQLView)
-		select {
-		case c.updateTriggerChan <- struct{}{}:
-		default:
-		}
+		c.triggerUpdate()
 	default:
 		switch event.Key() {
 		case tcell.KeyESC:
 			c.HideSQLViewer()
 			c.SetFocus(c.ListView)
-			select {
-			case c.updateTriggerChan <- struct{}{}:
-			default:
-			}
+			c.triggerUpdate()
 		case tcell.KeyCtrlS:
 			if c.ListView.GetItemCount() > 0 {
 				pri, sec := c.ListView.GetItemText(c.ListView.GetCurrentItem())
@@ -76,9 +58,7 @@ func (c *UIComponents) KeyHandler(event *tcell.EventKey) *tcell.EventKey {
 }
 
 func (c *UIComponents) OpenSQLQuery(i int, s1, s2 string, r rune) {
-	pri, sec := c.ListView.GetItemText(c.ListView.GetCurrentItem())
-
-	PreviewSQL(c.SQLView, pri, sec)
+	PreviewSQL(c.SQLView, s1, s2)
 	c.App.SetFocus(c.ListView)
 	if c.Grid != nil {
 		c.Grid.ResizeItem(c.SQLView, 0, BlockHeight10)

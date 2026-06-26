@@ -33,12 +33,10 @@ func main() {
 			uiComponents.SetGlobalHandler()
 
 			dsn := os.Getenv("MYSQL_DSN")
+			user := os.Getenv("MYSQL_USER")
+			password := os.Getenv("MYSQL_PASSWORD")
 
-			dbStore, err := db.ConnectDB(
-				os.Getenv("MYSQL_USER"),
-				os.Getenv("MYSQL_PASSWORD"),
-				dsn,
-			)
+			dbStore, err := db.ConnectDB(user, password, dsn)
 			if err != nil {
 				return err
 			}
@@ -77,6 +75,5 @@ func main() {
 
 	if err := mainCmd.Execute(); err != nil {
 		mainCmd.PrintErrln(err)
-		os.Exit(1)
 	}
 }

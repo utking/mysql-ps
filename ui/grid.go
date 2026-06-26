@@ -16,6 +16,14 @@ func (c *UIComponents) SetFocus(p tview.Primitive) *tview.Application {
 	return c.App.SetFocus(p)
 }
 
+func (c *UIComponents) triggerUpdate() {
+	select {
+	case <-c.updateTriggerChan:
+	default:
+	}
+	c.updateTriggerChan <- struct{}{}
+}
+
 func (c *UIComponents) FlipHelp() {
 	c.MenuVisible = !c.MenuVisible
 
