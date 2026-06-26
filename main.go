@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"sync"
 
@@ -27,7 +26,7 @@ func main() {
 		Use:   "mysql-ps",
 		Short: "MySQL Process List",
 		Long:  `Show MySQL Process List, with refreshing it every N seconds`,
-		Run: func(_ *cobra.Command, _ []string) {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			helpers.LoadConfig()
 			ui.CreateUIGrid()
 			ui.SetGlobalHandler(ui.KeyHandler)
@@ -40,8 +39,7 @@ func main() {
 				dsn,
 			)
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
+				return err
 			}
 
 			ui.IsRunningParam.Store(true)
@@ -73,6 +71,8 @@ func main() {
 			cancel()
 			wg.Wait()
 			dbStore.Close()
+
+			return nil
 		},
 	}
 
