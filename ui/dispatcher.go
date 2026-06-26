@@ -128,34 +128,34 @@ func performUpdate(
 	status := "Running"
 	listLen := len(itemsList)
 
-	for i := range itemsList {
-		if strings.Contains(
-			itemsList[i].Info.String,
-			"INFORMATION_SCHEMA.PROCESSLIST",
-		) {
+	type label struct {
+		Name    string
+		Content string
+	}
+	var labels []label
+
+	for _, item := range itemsList {
+		if strings.Contains(item.Info.String, "INFORMATION_SCHEMA.PROCESSLIST") {
 			listLen--
+			continue
 		}
+		labels = append(labels, label{
+			Name: fmt.Sprintf("%d: %s (%ds) from %s@%s - %s",
+				item.ID,
+				item.DB.String,
+				item.Time,
+				item.User,
+				helpers.HostDropPort(item.Host),
+				item.State.String),
+			Content: item.Info.String,
+		})
 	}
 
 	config.Update(func() {
 		config.StatusBar.SetBorderColor(tcell.ColorWhite)
 		config.ListView.Clear()
-		for i := range itemsList {
-			if strings.Contains(
-				itemsList[i].Info.String,
-				"INFORMATION_SCHEMA.PROCESSLIST",
-			) {
-				continue
-			}
-			lineName := fmt.Sprintf("%d: %s (%ds) from %s@%s - %s",
-				itemsList[i].ID,
-				itemsList[i].DB.String,
-				itemsList[i].Time,
-				itemsList[i].User,
-				helpers.HostDropPort(itemsList[i].Host),
-				itemsList[i].State.String)
-
-			config.ListView.AddItem(lineName, itemsList[i].Info.String, 0, nil)
+		for _, l := range labels {
+			config.ListView.AddItem(l.Name, l.Content, 0, nil)
 		}
 		UpdateStatusBar(
 			config.StatusBar,
@@ -165,5 +165,5 @@ func performUpdate(
 			config.ShowSystem.Load(),
 			config.DSN,
 			getMemUsage())
-	})
+		})
 }
