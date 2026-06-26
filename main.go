@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sync"
 
 	"github.com/spf13/cobra"
 	"github.com/utking/mysql-ps/db"
@@ -42,12 +43,13 @@ func main() {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
-			defer dbStore.Close()
 
 			ui.IsRunningParam.Store(true)
 			if ui.TimerSecParam <= 0 {
 				ui.TimerSecParam = DefaultRefreshInterval
 			}
+
+			var wg sync.WaitGroup
 
 			config := ui.WorkerConfig{
 				TimerSec:   ui.TimerSecParam,
@@ -59,13 +61,18 @@ func main() {
 				DSN:        dsn,
 				Databases:  databases,
 				App:        ui.UIApp,
+				WG:         &wg,
 			}
 
 			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
 
+			wg.Add(1)
 			go ui.PSWorker(ctx, dbStore.GetProcessList, config)
 			ui.Run()
+
+			cancel()
+			wg.Wait()
+			dbStore.Close()
 		},
 	}
 
