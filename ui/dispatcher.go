@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -36,6 +37,7 @@ type WorkerConfig struct {
 	DSN            string
 	Databases      []string
 	App            *tview.Application
+	WG             *sync.WaitGroup
 	OptionalUpdate func(func()) // Changed from Update to OptionalUpdate
 }
 
@@ -65,6 +67,10 @@ func PSWorker(
 	listFn func([]string, []any) ([]helpers.ProcessItem, error),
 	config WorkerConfig,
 ) {
+	if config.WG != nil {
+		defer config.WG.Done()
+	}
+
 	ticker := time.NewTicker(time.Duration(float64(time.Second) * float64(config.TimerSec)))
 	defer ticker.Stop()
 
@@ -165,5 +171,5 @@ func performUpdate(
 			config.ShowSystem.Load(),
 			config.DSN,
 			getMemUsage())
-		})
+	})
 }
