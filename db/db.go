@@ -12,6 +12,17 @@ type Querier interface {
 	Select(dest interface{}, query string, args ...interface{}) error
 }
 
+type Filter struct {
+	Column   string
+	Operator string
+	Value    string
+}
+
+var allowedColumns = map[string]bool{
+	"ID": true, "USER": true, "HOST": true, "DB": true,
+	"COMMAND": true, "TIME": true, "STATE": true, "INFO": true,
+}
+
 type DBStore struct {
 	db Querier
 }
@@ -36,14 +47,15 @@ func (s *DBStore) Close() error {
 	return nil
 }
 
-func (s *DBStore) GetProcessList(filters []string, databases []interface{}) ([]helpers.ProcessItem, error) {
+func (s *DBStore) GetProcessList(filters []Filter, databases []interface{}) ([]helpers.ProcessItem, error) {
 	list := []helpers.ProcessItem{}
-	filterBuilder := strings.Builder{}
+	query := strings.Builder{}
+	args := []interface{}{}
 
-	filterBuilder.WriteString(
+	query.WriteString(
 		"SELECT * FROM INFORMATION_SCHEMA.PROCESSLIST WHERE COMMAND != 'Sleep'",
 	)
-	filterBuilder.WriteString(
+	query.WriteString(
 		" AND USER != 'system user'",
 	)
 
@@ -52,20 +64,21 @@ func (s *DBStore) GetProcessList(filters []string, databases []interface{}) ([]h
 		for i := range databases {
 			placeholders[i] = "?"
 		}
-		filterBuilder.WriteString(" AND DB IN (" + strings.Join(placeholders, ",") + ")")
+		query.WriteString(" AND DB IN (" + strings.Join(placeholders, ",") + ")")
+		args = append(args, databases...)
 	}
 
-	for _, filter := range filters {
-		filterBuilder.WriteString(fmt.Sprintf(" AND %s", filter))
+	for _, f := range filters {
+		if !allowedColumns[strings.ToUpper(f.Column)] {
+			continue
+		}
+		query.WriteString(fmt.Sprintf(" AND %s %s ?", f.Column, f.Operator))
+		args = append(args, f.Value)
 	}
 
-	filterBuilder.WriteString(" ORDER BY time DESC")
+	query.WriteString(" ORDER BY time DESC")
 
-	if err := s.db.Select(
-		&list,
-		filterBuilder.String(),
-		databases...,
-	); err != nil {
+	if err := s.db.Select(&list, query.String(), args...); err != nil {
 		return list, err
 	}
 

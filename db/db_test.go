@@ -20,7 +20,7 @@ func (m *MockQuerier) Select(dest interface{}, query string, args ...interface{}
 func TestDBStore_GetProcessList(t *testing.T) {
 	tests := []struct {
 		name          string
-		filters       []string
+		filters       []Filter
 		databases     []interface{}
 		expectedQuery string
 		mockArgs      []interface{}
@@ -46,21 +46,20 @@ func TestDBStore_GetProcessList(t *testing.T) {
 			expectedCount: 3,
 		},
 		{
-			name:          "Potential injection (not blocked yet)",
-			filters:       []string{"state='Sending query'; DROP TABLE users--"},
+			name:          "Injection prevented",
+			filters:       []Filter{{Column: "STATE", Operator: "=", Value: "Sending query'; DROP TABLE users--"}},
 			databases:     nil,
-			expectedQuery: `SELECT * FROM INFORMATION_SCHEMA.PROCESSLIST WHERE COMMAND != 'Sleep' AND USER != 'system user' AND state='Sending query'; DROP TABLE users-- ORDER BY time DESC`,
-			mockArgs:      nil,
+			expectedQuery: `SELECT * FROM INFORMATION_SCHEMA.PROCESSLIST WHERE COMMAND != 'Sleep' AND USER != 'system user' AND STATE = ? ORDER BY time DESC`,
+			mockArgs:      []interface{}{"Sending query'; DROP TABLE users--"},
 			expectErr:     false,
 			expectedCount: 1,
 		},
-
 		{
 			name:          "Combined filters",
-			filters:       []string{"state='Sending query'"},
+			filters:       []Filter{{Column: "STATE", Operator: "=", Value: "Sending query"}},
 			databases:     []interface{}{"db1", "db2"},
-			expectedQuery: `SELECT * FROM INFORMATION_SCHEMA.PROCESSLIST WHERE COMMAND != 'Sleep' AND USER != 'system user' AND DB IN (?,?) AND state='Sending query' ORDER BY time DESC`,
-			mockArgs:      []interface{}{"db1", "db2"},
+			expectedQuery: `SELECT * FROM INFORMATION_SCHEMA.PROCESSLIST WHERE COMMAND != 'Sleep' AND USER != 'system user' AND DB IN (?,?) AND STATE = ? ORDER BY time DESC`,
+			mockArgs:      []interface{}{"db1", "db2", "Sending query"},
 			expectErr:     false,
 			expectedCount: 3,
 		},
@@ -92,21 +91,24 @@ func TestDBStore_GetProcessList(t *testing.T) {
 		},
 		{
 			name:          "Complex combined filters",
-			filters:       []string{"state='Sending query'", "user_id=100", "priority='high'"},
+			filters:       []Filter{{Column: "STATE", Operator: "=", Value: "Sending query"}, {Column: "USER", Operator: "=", Value: "admin"}, {Column: "TIME", Operator: ">", Value: "100"}},
 			databases:     []interface{}{"db1", "db2", "db3", "db4"},
-			expectedQuery: `SELECT * FROM INFORMATION_SCHEMA.PROCESSLIST WHERE COMMAND != 'Sleep' AND USER != 'system user' AND DB IN (?,?,?,?) AND state='Sending query' AND user_id=100 AND priority='high' ORDER BY time DESC`,
-			mockArgs:      []interface{}{"db1", "db2", "db3", "db4"},
+			expectedQuery: `SELECT * FROM INFORMATION_SCHEMA.PROCESSLIST WHERE COMMAND != 'Sleep' AND USER != 'system user' AND DB IN (?,?,?,?) AND STATE = ? AND USER = ? AND TIME > ? ORDER BY time DESC`,
+			mockArgs:      []interface{}{"db1", "db2", "db3", "db4", "Sending query", "admin", "100"},
 			expectErr:     false,
 			expectedCount: 12,
 		},
 		{
-			name:          "Injection Baseline - multiple statements",
-			filters:       []string{"state='Sending query'; DROP TABLE users;--", "time > 1000"},
+			name:          "Injection prevented - multiple filters",
+			filters:       []Filter{
+				{Column: "STATE", Operator: "=", Value: "Sending query'; DROP TABLE users;--"},
+				{Column: "TIME", Operator: ">", Value: "1000"},
+			},
 			databases:     nil,
-			expectedQuery: `SELECT * FROM INFORMATION_SCHEMA.PROCESSLIST WHERE COMMAND != 'Sleep' AND USER != 'system user' AND state='Sending query'; DROP TABLE users;-- AND time > 1000 ORDER BY time DESC`,
-			mockArgs:      nil,
+			expectedQuery: `SELECT * FROM INFORMATION_SCHEMA.PROCESSLIST WHERE COMMAND != 'Sleep' AND USER != 'system user' AND STATE = ? AND TIME > ? ORDER BY time DESC`,
+			mockArgs:      []interface{}{"Sending query'; DROP TABLE users;--", "1000"},
 			expectErr:     false,
-			expectedCount: 1,
+			expectedCount: 2,
 		},
 	}
 
