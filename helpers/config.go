@@ -33,19 +33,17 @@ func LoadConfig() {
 		user := cfg.Section("client").Key("user").String()
 		password := cfg.Section("client").Key("password").String()
 
-		if host != "" && os.Getenv("MYSQL_DSN") == "" {
-			os.Setenv("MYSQL_DSN", fmt.Sprintf("tcp(%s)", host))
-		}
-
 		if socket != "" {
 			os.Setenv("MYSQL_DSN", fmt.Sprintf("unix(%s)", socket))
+		} else if host != "" && os.Getenv("MYSQL_DSN") == "" {
+			os.Setenv("MYSQL_DSN", fmt.Sprintf("tcp(%s)", host))
 		}
 
 		if user != "" && os.Getenv("MYSQL_USER") == "" {
 			os.Setenv("MYSQL_USER", user)
 		}
 
-		if user != "" && os.Getenv("MYSQL_PASSWORD") == "" {
+		if password != "" && os.Getenv("MYSQL_PASSWORD") == "" {
 			os.Setenv("MYSQL_PASSWORD", password)
 		}
 	}
