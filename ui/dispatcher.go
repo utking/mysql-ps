@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/utking/mysql-ps/db"
 	"github.com/utking/mysql-ps/helpers"
 )
 
@@ -42,7 +43,7 @@ func (c *UIComponents) Run() {
 
 func PSWorker(
 	ctx context.Context,
-	listFn func([]string, []any) ([]helpers.ProcessItem, error),
+	listFn func([]db.Filter, []any) ([]helpers.ProcessItem, error),
 	config WorkerConfig,
 ) {
 	if config.WG != nil {
@@ -66,14 +67,14 @@ func PSWorker(
 
 func performUpdate(
 	config *WorkerConfig,
-	listFn func([]string, []any) ([]helpers.ProcessItem, error),
+	listFn func([]db.Filter, []any) ([]helpers.ProcessItem, error),
 ) {
 	ui := config.UI
-	var listFilters []string
+	var listFilters []db.Filter
 	if !ui.ShowSystem.Load() {
-		listFilters = []string{"DB != 'sys'"}
+		listFilters = []db.Filter{{Column: "DB", Operator: "!=", Value: "sys"}}
 	} else {
-		listFilters = []string{}
+		listFilters = []db.Filter{}
 	}
 
 	if ui.IsRunning.Load() == false {

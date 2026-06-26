@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/rivo/tview"
+	"github.com/utking/mysql-ps/db"
 	"github.com/utking/mysql-ps/helpers"
 )
 
@@ -29,7 +30,7 @@ func TestPerformUpdate_StateTransitions(t *testing.T) {
 		OptionalUpdate: func(fn func()) { fn() },
 	}
 
-	listFn := func(filters []string, dbs []any) ([]helpers.ProcessItem, error) {
+	listFn := func(filters []db.Filter, dbs []any) ([]helpers.ProcessItem, error) {
 		return []helpers.ProcessItem{
 			{ID: 1, Info: sql.NullString{String: "Query 1", Valid: true}, DB: sql.NullString{String: "db1", Valid: true}, Time: 10, User: "user1", Host: "localhost", State: sql.NullString{String: "Active", Valid: true}},
 		}, nil
@@ -63,7 +64,7 @@ func TestPerformUpdate_SystemFilter(t *testing.T) {
 		OptionalUpdate: func(fn func()) { fn() },
 	}
 
-	listFn := func([]string, []any) ([]helpers.ProcessItem, error) {
+	listFn := func([]db.Filter, []any) ([]helpers.ProcessItem, error) {
 		return []helpers.ProcessItem{
 			{ID: 1, Info: sql.NullString{String: "Query 1", Valid: true}, DB: sql.NullString{String: "db1", Valid: true}, Time: 10, User: "user1", Host: "localhost", State: sql.NullString{String: "Active", Valid: true}},
 			{ID: 2, Info: sql.NullString{String: "INFORMATION_SCHEMA.PROCESSLIST query", Valid: true}, DB: sql.NullString{String: "db1", Valid: true}, Time: 10, User: "user1", Host: "localhost", State: sql.NullString{String: "Active", Valid: true}},
