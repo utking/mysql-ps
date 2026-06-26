@@ -56,14 +56,15 @@ func main() {
 			}
 
 			ctx, cancel := context.WithCancel(context.Background())
+			defer func() {
+				cancel()
+				wg.Wait()
+				dbStore.Close()
+			}()
 
 			wg.Add(1)
 			go ui.PSWorker(ctx, dbStore.GetProcessList, config)
 			uiComponents.Run()
-
-			cancel()
-			wg.Wait()
-			dbStore.Close()
 
 			return nil
 		},
