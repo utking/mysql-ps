@@ -31,10 +31,12 @@ func main() {
 			ui.CreateUIGrid()
 			ui.SetGlobalHandler(ui.KeyHandler)
 
+			dsn := os.Getenv("MYSQL_DSN")
+
 			dbStore, err := db.ConnectDB(
 				os.Getenv("MYSQL_USER"),
 				os.Getenv("MYSQL_PASSWORD"),
-				os.Getenv("MYSQL_DSN"),
+				dsn,
 			)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
@@ -54,7 +56,7 @@ func main() {
 				StatusBar:  ui.UIStatusBar,
 				ListView:   ui.UIListView,
 				SQLView:    ui.UISQLView,
-				DSN:        os.Getenv("MYSQL_DSN"),
+				DSN:        dsn,
 				Databases:  databases,
 				App:        ui.UIApp,
 			}
@@ -72,7 +74,7 @@ func main() {
 	mainCmd.Flags().StringArrayVarP(&databases, "database", "d", []string{}, "Databases list to filter by; example - -d b1 -d db2")
 
 	if err := mainCmd.Execute(); err != nil {
-		mainCmd.Println(err)
+		mainCmd.PrintErrln(err)
 		os.Exit(1)
 	}
 }
