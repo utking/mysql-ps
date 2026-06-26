@@ -21,6 +21,7 @@ func (c *UIComponents) KeyHandler(event *tcell.EventKey) *tcell.EventKey {
 	case rune('?'):
 		c.FlipHelp()
 		c.triggerUpdate()
+		return nil
 	case rune('l'):
 		c.Grid.ResizeItem(c.SQLView, 0, BlockHeight10)
 		c.SetFocus(c.ListView)
@@ -32,9 +33,14 @@ func (c *UIComponents) KeyHandler(event *tcell.EventKey) *tcell.EventKey {
 	default:
 		switch event.Key() {
 		case tcell.KeyESC:
-			c.HideSQLViewer()
-			c.SetFocus(c.ListView)
+			if c.helpVisible {
+				c.FlipHelp()
+			} else {
+				c.HideSQLViewer()
+				c.SetFocus(c.ListView)
+			}
 			c.triggerUpdate()
+			return nil
 		case tcell.KeyCtrlS:
 			if c.ListView.GetItemCount() > 0 {
 				pri, sec := c.ListView.GetItemText(c.ListView.GetCurrentItem())

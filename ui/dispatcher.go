@@ -34,7 +34,7 @@ func (c *UIComponents) Run() {
 	c.ListView.SetSelectedFunc(c.OpenSQLQuery)
 
 	if err := c.App.
-		SetRoot(c.Flex, true).
+		SetRoot(c.Pages, true).
 		EnableMouse(c.UseMouse).
 		Run(); err != nil {
 		panic(err)

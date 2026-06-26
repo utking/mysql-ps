@@ -25,12 +25,13 @@ func (c *UIComponents) triggerUpdate() {
 }
 
 func (c *UIComponents) FlipHelp() {
-	c.MenuVisible = !c.MenuVisible
-
-	if c.MenuVisible {
-		c.Grid.ResizeItem(c.MenuBar, FixedRowsHeight3, BlockHeight2)
+	c.helpVisible = !c.helpVisible
+	if c.helpVisible {
+		c.Pages.ShowPage("help")
+		c.App.SetFocus(c.Pages)
 	} else {
-		c.Grid.ResizeItem(c.MenuBar, BlockHeightNone, BlockHeightNone)
+		c.Pages.HidePage("help")
+		c.App.SetFocus(c.ListView)
 	}
 }
 
