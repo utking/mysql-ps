@@ -5,58 +5,36 @@ import (
 	"fmt"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 	"github.com/utking/mysql-ps/helpers"
 )
 
-var (
-	TimerSecParam  float32
-	IsRunningParam atomic.Bool
-	ShowSystem     atomic.Bool
-	UseMouse       bool
-)
-
-var updateTriggerChan chan struct{}
-var lastManualUpdate time.Time
-
-func init() {
-	updateTriggerChan = make(chan struct{}, 1)
-}
-
 type WorkerConfig struct {
-	TimerSec       float32
-	ShowSystem     *atomic.Bool
-	IsRunning      *atomic.Bool
-	StatusBar      *tview.TextView
-	ListView       *tview.List
-	SQLView        *tview.TextView
+	UI             *UIComponents
 	DSN            string
 	Databases      []string
-	App            *tview.Application
 	WG             *sync.WaitGroup
-	OptionalUpdate func(func()) // Changed from Update to OptionalUpdate
+	OptionalUpdate func(func())
 }
 
 func (c *WorkerConfig) Update(fn func()) {
 	if c.OptionalUpdate != nil {
 		c.OptionalUpdate(fn)
-	} else if c.App != nil {
-		c.App.QueueUpdateDraw(fn)
+	} else if c.UI != nil && c.UI.App != nil {
+		c.UI.App.QueueUpdateDraw(fn)
 	} else {
 		fn()
 	}
 }
 
-func Run() {
-	UIListView.SetSelectedFunc(OpenSQLQuery)
+func (c *UIComponents) Run() {
+	c.ListView.SetSelectedFunc(c.OpenSQLQuery)
 
-	if err := UIApp.
-		SetRoot(UIFlex, true).
-		EnableMouse(UseMouse).
+	if err := c.App.
+		SetRoot(c.Flex, true).
+		EnableMouse(c.UseMouse).
 		Run(); err != nil {
 		panic(err)
 	}
@@ -71,7 +49,7 @@ func PSWorker(
 		defer config.WG.Done()
 	}
 
-	ticker := time.NewTicker(time.Duration(float64(time.Second) * float64(config.TimerSec)))
+	ticker := time.NewTicker(time.Duration(float64(time.Second) * float64(config.UI.TimerSec)))
 	defer ticker.Stop()
 
 	for {
@@ -80,7 +58,7 @@ func PSWorker(
 			return
 		case <-ticker.C:
 			performUpdate(&config, listFn)
-		case <-updateTriggerChan:
+		case <-config.UI.updateTriggerChan:
 			performUpdate(&config, listFn)
 		}
 	}
@@ -90,25 +68,26 @@ func performUpdate(
 	config *WorkerConfig,
 	listFn func([]string, []any) ([]helpers.ProcessItem, error),
 ) {
+	ui := config.UI
 	var listFilters []string
-	if !ShowSystem.Load() {
+	if !ui.ShowSystem.Load() {
 		listFilters = []string{"DB != 'sys'"}
 	} else {
 		listFilters = []string{}
 	}
 
-	if config.IsRunning.Load() == false {
+	if ui.IsRunning.Load() == false {
 		status := "Paused"
 		listLen := 0
 
 		config.Update(func() {
-			config.StatusBar.SetBorderColor(tcell.ColorYellow)
+			ui.StatusBar.SetBorderColor(tcell.ColorYellow)
 			UpdateStatusBar(
-				config.StatusBar,
+				ui.StatusBar,
 				status,
 				listLen,
-				config.TimerSec,
-				ShowSystem.Load(),
+				ui.TimerSec,
+				ui.ShowSystem.Load(),
 				config.DSN,
 				getMemUsage())
 		})
@@ -126,8 +105,8 @@ func performUpdate(
 	}
 
 	if itemsList, err = listFn(listFilters, dbInterfaces); err != nil {
-		config.SQLView.SetText(err.Error())
-		config.IsRunning.Store(false)
+		ui.SQLView.SetText(err.Error())
+		ui.IsRunning.Store(false)
 		return
 	}
 
@@ -158,17 +137,17 @@ func performUpdate(
 	}
 
 	config.Update(func() {
-		config.StatusBar.SetBorderColor(tcell.ColorWhite)
-		config.ListView.Clear()
+		ui.StatusBar.SetBorderColor(tcell.ColorWhite)
+		ui.ListView.Clear()
 		for _, l := range labels {
-			config.ListView.AddItem(l.Name, l.Content, 0, nil)
+			ui.ListView.AddItem(l.Name, l.Content, 0, nil)
 		}
 		UpdateStatusBar(
-			config.StatusBar,
+			ui.StatusBar,
 			status,
 			listLen,
-			config.TimerSec,
-			config.ShowSystem.Load(),
+			ui.TimerSec,
+			ui.ShowSystem.Load(),
 			config.DSN,
 			getMemUsage())
 	})

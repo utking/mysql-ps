@@ -26,7 +26,6 @@ var (
 		"Append SQL (Ctrl+A)",
 		"Quit (q)",
 	}
-	MenuVisible bool
 )
 
 func CreateMenuBar() *tview.Form {

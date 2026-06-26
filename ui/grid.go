@@ -1,54 +1,28 @@
 package ui
 
 import (
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
-var (
-	UIApp       *tview.Application
-	UIFlex      *tview.Flex
-	UIGrid      *tview.Flex
-	UIStatusBar *tview.TextView
-	UISQLView   *tview.TextView
-	UIListView  *tview.List
-	UIMenuBar   *tview.Form
-)
-
-func CreateUIGrid() {
-	UIApp = tview.NewApplication()
-
-	UIStatusBar = CreateStatusBar("Status")
-	UISQLView = CreateSQLViewer("SQL View")
-	UIListView = CreateListViewer(UIApp, "Process List")
-	UIMenuBar = CreateMenuBar()
-
-	UIFlex = tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(UIMenuBar, BlockHeightNone, BlockHeightNone, FocusDisable).
-		AddItem(UIStatusBar, FixedRowsHeight3, BlockHeight2, FocusDisable).
-		AddItem(UIListView, FixedRowsAuto, BlockHeight10, FocusEnable).
-		AddItem(UISQLView, FixedRowsAuto, BlockHeightNone, FocusDisable)
-	UIGrid = UIFlex
+func (c *UIComponents) SetGlobalHandler() {
+	c.App.SetInputCapture(c.KeyHandler)
 }
 
-func SetGlobalHandler(capture func(event *tcell.EventKey) *tcell.EventKey) {
-	UIApp.SetInputCapture(capture)
+func (c *UIComponents) StopApp() {
+	c.App.Stop()
 }
 
-func StopApp() {
-	UIApp.Stop()
+func (c *UIComponents) SetFocus(p tview.Primitive) *tview.Application {
+	return c.App.SetFocus(p)
 }
 
-func SetFocus(p tview.Primitive) *tview.Application {
-	return UIApp.SetFocus(p)
-}
+func (c *UIComponents) FlipHelp() {
+	c.MenuVisible = !c.MenuVisible
 
-func FlipHelp() {
-	MenuVisible = !MenuVisible
-
-	if MenuVisible {
-		UIGrid.ResizeItem(UIMenuBar, FixedRowsHeight3, BlockHeight2)
+	if c.MenuVisible {
+		c.Grid.ResizeItem(c.MenuBar, FixedRowsHeight3, BlockHeight2)
 	} else {
-		UIGrid.ResizeItem(UIMenuBar, BlockHeightNone, BlockHeightNone)
+		c.Grid.ResizeItem(c.MenuBar, BlockHeightNone, BlockHeightNone)
 	}
 }
+

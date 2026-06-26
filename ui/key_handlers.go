@@ -7,66 +7,66 @@ import (
 	"github.com/utking/mysql-ps/helpers"
 )
 
-func KeyHandler(event *tcell.EventKey) *tcell.EventKey {
+func (c *UIComponents) KeyHandler(event *tcell.EventKey) *tcell.EventKey {
 	switch event.Rune() {
 	case rune('q'):
-		StopApp()
+		c.StopApp()
 	case rune('p'):
-		current := IsRunningParam.Load()
-		IsRunningParam.Store(!current)
+		current := c.IsRunning.Load()
+		c.IsRunning.Store(!current)
 		select {
-		case updateTriggerChan <- struct{}{}:
+		case c.updateTriggerChan <- struct{}{}:
 		default:
 		}
 	case rune('s'):
-		ShowSystem.Store(!ShowSystem.Load())
+		c.ShowSystem.Store(!c.ShowSystem.Load())
 		select {
-		case updateTriggerChan <- struct{}{}:
+		case c.updateTriggerChan <- struct{}{}:
 		default:
 		}
 	case rune('?'):
-		FlipHelp()
+		c.FlipHelp()
 		select {
-		case updateTriggerChan <- struct{}{}:
+		case c.updateTriggerChan <- struct{}{}:
 		default:
 		}
 	case rune('l'):
-		UIGrid.ResizeItem(UISQLView, 0, BlockHeight10)
-		SetFocus(UIListView)
+		c.Grid.ResizeItem(c.SQLView, 0, BlockHeight10)
+		c.SetFocus(c.ListView)
 		select {
-		case updateTriggerChan <- struct{}{}:
+		case c.updateTriggerChan <- struct{}{}:
 		default:
 		}
 	case rune('v'):
-		UIGrid.ResizeItem(UISQLView, 0, BlockHeight10*2)
-		SetFocus(UISQLView)
+		c.Grid.ResizeItem(c.SQLView, 0, BlockHeight10*2)
+		c.SetFocus(c.SQLView)
 		select {
-		case updateTriggerChan <- struct{}{}:
+		case c.updateTriggerChan <- struct{}{}:
 		default:
 		}
 	default:
 		switch event.Key() {
 		case tcell.KeyESC:
-			HideSQLViewer()
-			SetFocus(UIListView)
+			c.HideSQLViewer()
+			c.SetFocus(c.ListView)
 			select {
-			case updateTriggerChan <- struct{}{}:
+			case c.updateTriggerChan <- struct{}{}:
 			default:
 			}
 		case tcell.KeyCtrlS:
-			if UIListView.GetItemCount() > 0 {
-				pri, sec := UIListView.GetItemText(UIListView.GetCurrentItem())
+			if c.ListView.GetItemCount() > 0 {
+				pri, sec := c.ListView.GetItemText(c.ListView.GetCurrentItem())
 
 				if err := helpers.WriteSQLLog(fmt.Sprintf("-- %s\n%s", pri, sec), false); err != nil {
-					UISQLView.SetText(err.Error())
+					c.SQLView.SetText(err.Error())
 				}
 			}
 		case tcell.KeyCtrlA:
-			if UIListView.GetItemCount() > 0 {
-				pri, sec := UIListView.GetItemText(UIListView.GetCurrentItem())
+			if c.ListView.GetItemCount() > 0 {
+				pri, sec := c.ListView.GetItemText(c.ListView.GetCurrentItem())
 
 				if err := helpers.WriteSQLLog(fmt.Sprintf("\n--\n-- %s\n%s", pri, sec), true); err != nil {
-					UISQLView.SetText(err.Error())
+					c.SQLView.SetText(err.Error())
 				}
 			}
 		}
@@ -75,12 +75,12 @@ func KeyHandler(event *tcell.EventKey) *tcell.EventKey {
 	return event
 }
 
-func OpenSQLQuery(i int, s1, s2 string, r rune) {
-	pri, sec := UIListView.GetItemText(UIListView.GetCurrentItem())
+func (c *UIComponents) OpenSQLQuery(i int, s1, s2 string, r rune) {
+	pri, sec := c.ListView.GetItemText(c.ListView.GetCurrentItem())
 
-	PreviewSQL(UISQLView, pri, sec)
-	UIApp.SetFocus(UIListView)
-	if UIGrid != nil {
-		UIGrid.ResizeItem(UISQLView, 0, BlockHeight10)
+	PreviewSQL(c.SQLView, pri, sec)
+	c.App.SetFocus(c.ListView)
+	if c.Grid != nil {
+		c.Grid.ResizeItem(c.SQLView, 0, BlockHeight10)
 	}
 }
