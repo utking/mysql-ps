@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -16,7 +17,7 @@ func TestExpandMyCnfPath(t *testing.T) {
 
 	expected := ".my.cnf"
 	// The result should end with .my.cnf and not contain ~
-	if path != home+"/.my.cnf" && !strings_contains(path, expected) {
+	if path != home+"/.my.cnf" && !strings.HasSuffix(path, expected) {
 		t.Errorf("ExpandMyCnfPath() = %q; want something ending in %q", path, expected)
 	}
 }
@@ -36,6 +37,4 @@ func TestLoadConfigMissingEnvVars(t *testing.T) {
 	LoadConfig()
 }
 
-func strings_contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s[len(s)-len(substr):] == substr || s[:len(substr)] == substr)
-}
+
