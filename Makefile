@@ -1,6 +1,9 @@
 build:
 	go build -o bin/mysql-ps -ldflags="-s -w -extldflags=-static" main.go
 
+test:
+	go test -v ./...
+
 build-all: build
 
 tar: build
