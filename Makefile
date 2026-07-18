@@ -1,5 +1,5 @@
 build:
-	go build -o bin/mysql-ps -ldflags="-s -w -extldflags=-static" main.go
+	CGO_ENABLED=0 go build -o bin/mysql-ps -ldflags="-s -w -extldflags=-static" main.go
 
 test:
 	go test -v ./...
